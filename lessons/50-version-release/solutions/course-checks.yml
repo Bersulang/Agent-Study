@@ -1,0 +1,15 @@
+# 参考CI配置：完成练习后按仓库环境复制到.github/workflows；不执行发布。
+name: Course checks
+on: [push, pull_request]
+jobs:
+  offline:
+    runs-on: windows-latest
+    steps:
+      # checkout只读取当前提交，setup-python统一课程解释器。
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # 根验证器执行离线课程材料检查，不传入凭证或模型密钥。
+      - name: Verify offline course
+        run: python tools/verify_course.py

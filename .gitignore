@@ -1,0 +1,28 @@
+# 本地 Python 环境和运行缓存，不属于教学源代码。
+.venv/
+# 阶段 01 的独立环境练习，同样不纳入版本管理。
+.venv-practice/
+# 后续阶段的可选SDK环境，避免上传环境目录。
+.venv-*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 本地凭证不能提交；脱敏示例配置可以保留。
+.env
+.env.*
+!.env.example
+
+# 后续课程产生的临时结果；正式教学数据单独存放。
+artifacts/
+*.log
+# 数据库与Java构建产物不属于教学源码。
+*.db
+*.db-wal
+*.db-shm
+target/
+dist/
+build/
+*.egg-info/

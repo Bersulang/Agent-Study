@@ -1,0 +1,2 @@
+# pypdf解析已有PDF文本层，不提供OCR。
+pypdf==6.19.0

@@ -1,0 +1,19 @@
+# 仅暴露本机端口；数据使用命名卷持久保存。
+services:
+  health:
+    build:
+      context: ..
+      dockerfile: integrations/Dockerfile
+    ports: ["127.0.0.1:8080:8080"]
+    volumes: ["agent-data:/app/data"]
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/ready', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+volumes:
+  agent-data:

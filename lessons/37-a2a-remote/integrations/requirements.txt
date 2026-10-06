@@ -1,0 +1,7 @@
+# 固定官方SDK 0.3线以复现；新版1.x API需要按迁移指南升级。
+a2a-sdk[http-server]==0.3.26
+httpx==0.28.1
+uvicorn==0.34.3
+starlette==0.46.2
+sse-starlette==3.0.3
+pydantic==2.13.5

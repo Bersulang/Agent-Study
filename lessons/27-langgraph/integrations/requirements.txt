@@ -1,0 +1,2 @@
+# 真正的LangGraph状态图、检查点和interrupt API。
+langgraph==1.2.13

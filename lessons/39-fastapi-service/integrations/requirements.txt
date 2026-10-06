@@ -1,0 +1,6 @@
+# FastAPI读取注解做请求校验，httpx供TestClient，uvicorn运行ASGI服务。
+fastapi==0.115.12
+httpx==0.28.1
+uvicorn==0.34.3
+pydantic==2.13.5
+starlette==0.46.2

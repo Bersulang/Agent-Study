@@ -1,0 +1,9 @@
+# Compose 的构建上下文是阶段 49 目录，只允许教学服务需要的源码。
+*
+!integrations/
+integrations/*
+!integrations/Dockerfile
+!integrations/server.py
+!examples/
+examples/*
+!examples/demo.py

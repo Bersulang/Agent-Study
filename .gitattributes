@@ -1,0 +1,10 @@
+# 文档和源码统一LF，避免跨Windows/Linux时产生无关换行变更。
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.java text eol=lf
+*.xml text eol=lf
+Dockerfile text eol=lf

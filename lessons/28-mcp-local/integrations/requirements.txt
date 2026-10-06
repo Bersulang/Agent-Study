@@ -1,0 +1,2 @@
+# 官方Python SDK v2；不要混用旧FastMCP/ClientSession示例的字段拼写。
+mcp==2.3.0

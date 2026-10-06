@@ -1,0 +1,18 @@
+# 推送到用户自己的仓库后，由GitHub执行；不调用真实模型或外部业务。
+name: course-checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  offline-course:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # 默认课程仅使用标准库；无需安装可选SDK或配置密钥。
+      - run: python tools/verify_course.py

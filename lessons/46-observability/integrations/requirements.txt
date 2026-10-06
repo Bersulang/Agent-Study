@@ -1,0 +1,2 @@
+# 实际OpenTelemetry SDK，版本在2026-10-06从PyPI核查。
+opentelemetry-sdk==1.45.0

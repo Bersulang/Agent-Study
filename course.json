@@ -1,0 +1,398 @@
+{
+  "schema_version": 1,
+  "python": "3.12",
+  "lessons": [
+    {
+      "stage": 1,
+      "title": "开发环境与第一个企业助手程序",
+      "path": "lessons/01-environment",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 2,
+      "title": "变量、容器与可变性",
+      "path": "lessons/02-basic-syntax",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 3,
+      "title": "函数、作用域与模块",
+      "path": "lessons/03-functions-modules",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 4,
+      "title": "文件、JSON与异常边界",
+      "path": "lessons/04-files-errors",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 5,
+      "title": "类型、对象与SDK常见语法",
+      "path": "lessons/05-types-objects",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 6,
+      "title": "异步、超时、取消与测试",
+      "path": "lessons/06-async-testing",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 7,
+      "title": "需求边界与可验收目标",
+      "path": "lessons/07-requirements",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 8,
+      "title": "模型API、上下文与成本",
+      "path": "lessons/08-model-api",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 9,
+      "title": "提示词结构、版本与评估",
+      "path": "lessons/09-prompt-engineering",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 10,
+      "title": "结构化输出、SSE与取消",
+      "path": "lessons/10-structured-streaming",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 11,
+      "title": "工具契约与参数校验",
+      "path": "lessons/11-tool-contracts",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 12,
+      "title": "重试、幂等与不确定结果",
+      "path": "lessons/12-tool-reliability",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 13,
+      "title": "手写模型—工具循环",
+      "path": "lessons/13-agent-loop",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 14,
+      "title": "消息、事件与最小Runtime",
+      "path": "lessons/14-agent-runtime",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 15,
+      "title": "工作流、依赖与有限重规划",
+      "path": "lessons/15-workflow-planning",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 16,
+      "title": "澄清、审批与结果检查",
+      "path": "lessons/16-human-review",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 17,
+      "title": "文档导入与质量检查",
+      "path": "lessons/17-document-ingestion",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 18,
+      "title": "带引用的基础RAG",
+      "path": "lessons/18-basic-rag",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 19,
+      "title": "检索优化与定位失败",
+      "path": "lessons/19-retrieval-optimization",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 20,
+      "title": "知识生命周期",
+      "path": "lessons/20-knowledge-lifecycle",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 21,
+      "title": "知识权限与冲突",
+      "path": "lessons/21-knowledge-permissions",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 22,
+      "title": "受预算控制的Agentic RAG",
+      "path": "lessons/22-agentic-rag",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 23,
+      "title": "上下文工程",
+      "path": "lessons/23-context-engineering",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 24,
+      "title": "长期记忆的来源与修正",
+      "path": "lessons/24-long-term-memory",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 25,
+      "title": "工作空间与任务恢复",
+      "path": "lessons/25-workspace-tasks",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 26,
+      "title": "按需加载的能力包",
+      "path": "lessons/26-skills",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 27,
+      "title": "LangGraph状态与中断",
+      "path": "lessons/27-langgraph",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 28,
+      "title": "本地MCP接入",
+      "path": "lessons/28-mcp-local",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 29,
+      "title": "远程MCP与故障边界",
+      "path": "lessons/29-mcp-remote",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 30,
+      "title": "职责划分与路由",
+      "path": "lessons/30-routing-roles",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 31,
+      "title": "主控与子Agent委派",
+      "path": "lessons/31-supervisor-workers",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 32,
+      "title": "Handoff控制权交接",
+      "path": "lessons/32-handoff",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 33,
+      "title": "并行任务与依赖",
+      "path": "lessons/33-parallel-dependencies",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 34,
+      "title": "通信契约与共享状态",
+      "path": "lessons/34-contracts-state",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 35,
+      "title": "生成检查与证据冲突",
+      "path": "lessons/35-review-conflicts",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 36,
+      "title": "协作失败与总预算",
+      "path": "lessons/36-failure-budgets",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 37,
+      "title": "跨服务Agent与A2A",
+      "path": "lessons/37-a2a-remote",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 38,
+      "title": "架构评估与选择",
+      "path": "lessons/38-architecture-evaluation",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 39,
+      "title": "FastAPI服务与事件接口",
+      "path": "lessons/39-fastapi-service",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 40,
+      "title": "Spring Boot契约与身份",
+      "path": "lessons/40-java-integration",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 41,
+      "title": "持久化、事务与恢复",
+      "path": "lessons/41-persistence",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 42,
+      "title": "Worker队列与租约",
+      "path": "lessons/42-workers-queues",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 43,
+      "title": "审批、幂等与查证",
+      "path": "lessons/43-approval-idempotency",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 44,
+      "title": "评估数据与质量标准",
+      "path": "lessons/44-evaluation-data",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 45,
+      "title": "执行过程与回归测试",
+      "path": "lessons/45-trajectory-tests",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 46,
+      "title": "链路追踪、成本与脱敏",
+      "path": "lessons/46-observability",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 47,
+      "title": "提示注入、工具边界与沙箱",
+      "path": "lessons/47-injection-sandbox",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 48,
+      "title": "身份、最小权限与多租户隔离",
+      "path": "lessons/48-identity-tenancy",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 49,
+      "title": "部署、配置与健康检查",
+      "path": "lessons/49-deployment",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 50,
+      "title": "版本、发布门槛与回滚",
+      "path": "lessons/50-version-release",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 51,
+      "title": "性能、成本与容量治理",
+      "path": "lessons/51-capacity-cost",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 52,
+      "title": "备份恢复、事故与反馈闭环",
+      "path": "lessons/52-operations-recovery",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 53,
+      "title": "多 Agent 调研助手项目",
+      "path": "lessons/53-research-project",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 54,
+      "title": "受控编码与数据分析助手项目",
+      "path": "lessons/54-coding-data-project",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 55,
+      "title": "浏览器与多模态助手项目",
+      "path": "lessons/55-browser-multimodal",
+      "material_status": "ready",
+      "ability_status": "pending"
+    },
+    {
+      "stage": 56,
+      "title": "企业知识与工单协作助手：毕业交付",
+      "path": "lessons/56-capstone",
+      "material_status": "ready",
+      "ability_status": "pending"
+    }
+  ]
+}

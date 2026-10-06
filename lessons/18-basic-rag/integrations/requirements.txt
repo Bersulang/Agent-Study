@@ -1,0 +1,2 @@
+# Ollama适配只需标准库；此依赖仅用于可选SentenceTransformer本地模型演示。
+sentence-transformers==6.1.0

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {"type": "string", "minLength": 1},
+    "priority": {"type": "integer", "minimum": 1, "maximum": 5}
+  },
+  "required": ["title", "priority"],
+  "additionalProperties": false
+}

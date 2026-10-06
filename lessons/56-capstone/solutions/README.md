@@ -1,0 +1,34 @@
+# 毕业练习参考实现与交付说明
+
+## 对应每项要求
+
+1. 新知识资料见 [knowledge_extension.py](knowledge_extension.py)，包含有效来源、未知资料和跨租户无证据；新增只读工具是示例Assistant.ticket_summary，按身份tenant限定查询。
+2. 模型适配见 [model_planner.py](model_planner.py)。默认运行只验证固定夹具；真实调用先按阶段08设置环境变量，再将real_planner()注入Assistant。计划JSON检查动作及字段，不授予额外权限。
+3. 修订草稿使用Assistant.revise。参数摘要变化后旧批准必然失败，新的批准才能写入；取消、过期、重复、冲突和重启回归见tests。
+4. 交付内容参考下面的手册，真实负载和模型数据由你在自己的环境测量，不能用固定输出冒充结果。
+
+```powershell
+.\.venv\Scripts\python.exe lessons/56-capstone/solutions/solution.py
+.\.venv\Scripts\python.exe lessons/56-capstone/solutions/knowledge_extension.py
+.\.venv\Scripts\python.exe lessons/56-capstone/solutions/model_planner.py
+```
+
+## 参考交付手册
+
+- **需求边界**：查询授权知识、创建工单草稿、批准后提交；没有证据澄清或说明限制，不自动退款或执行shell。
+- **架构**：客户端 → API校验 → 服务端身份 → 计划Schema → 白名单动作 → 知识/业务只读协作或待审批草稿 → 业务事务。模型计划与执行权限分离。
+- **数据**：drafts保存tenant、幂等键、参数摘要、状态、期限和结果；tickets以tenant+key唯一。真实记忆与知识按照阶段20—24设计。
+- **权限矩阵**：reader只读；writer创建与编辑；approver批准绑定具体摘要。当前会话Token是夹具，生产接入可信身份提供方并校验签名及权限。
+- **测试评估**：正常、无证据、参数缺失、越权、过期、撤销、重放、不同参数复用键、重启；模型效果以独立评估集另测。
+- **发布**：固定代码、模型、提示词、工具和知识版本，通过阶段50门槛后灰度；当前离线模型版本fixture-v1。
+- **回滚**：恢复已验证配置包，长期任务保持原行为版本。若数据库结构不兼容，使用前向修复或专门迁移，不能盲目回滚。
+- **故障恢复**：暂停新写入、隔离恢复与核查、查证外部副作用，再逐步恢复。SQLite本地事务不能保证Java服务副作用恰好一次。
+- **运维**：记录请求与步骤、耗时、用量、错误类别，不记录密钥全文。限流、租户配额和告警按阶段46/51/52执行。
+
+## 单Agent与多Agent成本比较方法
+
+使用阶段38同一任务集，固定供应商/模型/价格版本，统计每请求模型调用数、输入输出Token、成功率、p50/p95、错误和维护负担。主管+检索员的额外调用可能提高成本；独立只读任务并行可减少串行等待，但需实测。默认夹具没有真实Token账单，因此不填写虚构金额。
+
+## 未验证项
+
+真实外部模型、生产认证、Docker部署、Java构建/联调、真实企业负载、跨服务故障恢复。默认流程和真实FastAPI本地接口由根验证报告记录。

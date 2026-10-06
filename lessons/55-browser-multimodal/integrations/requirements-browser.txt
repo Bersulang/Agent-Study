@@ -1,0 +1,2 @@
+# 真实浏览器SDK；浏览器二进制需另运行playwright install chromium。
+playwright==1.63.0
