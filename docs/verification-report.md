@@ -32,15 +32,15 @@
 
 阶段17/27/28/29的具体SDK命令及依赖快照见对应integrations/verification.md；阶段30—43的详细集成记录见 [验证记录](../lessons/30-routing-roles/verification.md)。
 
-根代理另外实际执行：
+制作课程时另外实际执行了以下检查（当时的临时SDK环境已停用，重跑前需按对应课程准备依赖）：
 
 ```powershell
-.\.venv-integrations\Scripts\python.exe lessons/46-observability/integrations/otel_demo.py
-.\.venv-integrations\Scripts\python.exe lessons/55-browser-multimodal/integrations/browser_demo.py
+python lessons/46-observability/integrations/otel_demo.py
+python lessons/55-browser-multimodal/integrations/browser_demo.py
 & "$env:TEMP/agent-study-services-venv/Scripts/python.exe" lessons/56-capstone/integrations/test_api.py -v
 ```
 
-其中`.venv-integrations`安装本课锁定的OpenTelemetry/Playwright，Chromium通过官方安装命令下载；临时API环境依赖与阶段39一致。环境目录均不提交。
+当时安装了本课锁定的OpenTelemetry/Playwright，Chromium通过官方安装命令下载；临时API环境依赖与阶段39一致。环境目录均不提交。
 
 ## 审查中修复的边界
 
@@ -57,6 +57,5 @@
 - 本机缺JDK/Maven，未构建Spring Boot或运行Java测试，也未Python→Spring端到端联调。
 - 本机缺Docker，未运行镜像、Compose、容器沙箱或重启持久卷演练。
 - 未验证生产OAuth/JWT提供方、TLS、公网协议互操作、分布式队列、企业负载或外部业务副作用。
-- GitHub Actions文件已提供；Windows/Linux托管运行需要你推送到自己的仓库后执行。
 
 以上环境都有课程说明或集成文件，但未执行的项目不标为通过。课程完整交付不表示对任何企业场景作通用生产保证。

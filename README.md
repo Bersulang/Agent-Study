@@ -54,7 +54,7 @@ python -m venv .venv
 - 阶段 02—56：逐课讲义、知识、注释演示、练习要求与骨架、参考答案和验收。
 - Python、模型调用、工具与单Agent、RAG、记忆、Skills、框架、MCP、完整多Agent、A2A、后端、审批恢复、评估安全、生产治理、专项与毕业项目。
 - 实际模型HTTP、pypdf、LangGraph、MCP、A2A、FastAPI、Spring Boot、OpenTelemetry、Playwright、图像/音频与Docker接入文件。
-- 统一验证脚本、行为回归和双平台GitHub Actions课程检查。
+- 本地验证脚本与行为回归。
 
 默认示例无模型密钥、无网络依赖。模拟模型、教学向量、内存队列和协议子集均标注边界；真实SDK和外部环境的验证范围见报告。
 
@@ -84,8 +84,7 @@ agent-study/
 │   ├── progress.md                 # 学习与交付状态
 │   ├── teaching-guide.md           # 教学方式
 │   ├── integrations.md             # 真实集成环境和命令入口
-│   ├── verification-report.md      # 全课程验证与边界
-│   └── superpowers/                # 内容设计与实施记录
+│   └── verification-report.md      # 全课程验证与边界
 ├── lessons/
 │   ├── 01-environment/
 │   │   ├── README.md               # 本阶段讲义
@@ -96,13 +95,12 @@ agent-study/
 ├── tools/verify_course.py          # 统一验证入口
 ├── tests/                          # 验证器自身回归
 ├── course.json                     # 机器可读课程目录
-├── .github/workflows/course.yml    # GitHub双平台离线检查
 └── .venv/                          # 本地环境，不纳入版本管理
 ```
 
 ## 环境基线
 
-本次在 Windows PowerShell、Python 3.12.10 下验证。默认课程使用标准库；可选SDK版本与真实检查记录见 [验证报告](docs/verification-report.md)。GitHub Actions配置为Windows与Linux，托管运行结果需在你推送仓库后查看。
+本次在 Windows PowerShell、Python 3.12.10 下验证。默认课程使用标准库；可选SDK版本与真实检查记录见 [验证报告](docs/verification-report.md)。
 
 所有命令默认从项目根目录执行。未激活虚拟环境也可以按上面的完整路径运行。遇到问题先保存命令与完整错误信息，按讲义排查；不要贴出密钥或私人业务数据。
 
