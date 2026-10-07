@@ -7,11 +7,13 @@
 - 练习状态：未提交。
 - 能力状态：待验收。
 - 阶段 01—56：全部讲义、知识、示例、练习与答案已准备；所有能力仍待验收。
-- 最近维护日期：2026-10-06。
+- 最近维护日期：2026-10-07。
 
 配置维护记录：补齐`.env.example`并说明当前脚本不自动加载`.env`；按学员要求移除GitHub Actions，日常仅使用`.venv`。第二次提交前确认额外SDK虚拟环境已清理。这是材料维护，不计为学员能力验收。
 
 目录精简记录：移除课程制作过程的设计与执行记录，保留课程讲义、知识文档和练习材料。
+
+2026-10-07 路线与阶段设计修订：保持01—56编号，补充推荐路径、真实先修、连续项目里程碑及机制/集成关卡；细化05/06初学者分节；阶段13新增可注入模拟模型的反馈循环和回归测试；修订毕业交付矩阵。此项仅为材料维护，不代表学员已通过。
 
 ## 本机环境检查
 
@@ -22,6 +24,21 @@
 | pip | 25.0.1 | 已安装，本阶段不下载第三方包 |
 | uv | 0.12.23 | 已安装，本阶段先理解 venv 和 pip |
 | Git | 2.56.0.windows.1 | 已初始化本地 main 分支，作者配置仅作用于当前项目 |
+
+## 机制验收与集成待验收状态
+
+课程机制验证、真实服务集成和学员能力验收分开记录。未运行的真实模型/服务不得标已通过；缺少环境的阶段可以先完成机制验收，状态写“集成待验收”，不阻塞不依赖该环境的后续课程。
+
+| 关卡 | 材料运行验证 | 学员机制能力 | 真实集成能力 |
+| --- | --- | --- | --- |
+| 阶段08 模型文本API | 全课程验证器通过 | 待验收 | 待验收；本轮未调用真实模型 |
+| 阶段13 反馈循环 | 12项阶段测试、两种演示、练习骨架和参考解法通过 | 待验收 | 待验收；没有接入原生工具调用模型 |
+| 阶段18 RAG | 全课程验证器通过 | 待验收 | 待验收；本轮未运行真实Embedding服务 |
+| 阶段39/40 服务集成 | 全课程验证器通过 | 待验收 | 待验收；本轮未运行真实API/Java服务 |
+| 阶段49 部署 | 全课程验证器通过 | 待验收 | 待验收；本轮未构建容器 |
+| 阶段56 毕业交付 | 全课程验证器通过 | 待验收 | 待验收；按学员目标环境补真实证据 |
+
+本轮复核的精确命令和结果见[验证报告](verification-report.md)。统一验证器通过不等于学员机制能力通过。阶段01—56能力状态继续全部待验收；真实模型、Embedding、Java服务和容器环境本轮均未验证。历史SDK运行状态仍见2026-10-06报告，不视作本轮重新执行。
 
 ## 阶段 01 能力检查
 
@@ -80,20 +97,20 @@ python -m venv .venv
 | 02 | [变量、容器与可变性](../lessons/02-basic-syntax/README.md) | 已准备 | 未提交 | 待验收 |
 | 03 | [函数、作用域与模块](../lessons/03-functions-modules/README.md) | 已准备 | 未提交 | 待验收 |
 | 04 | [文件、JSON与异常边界](../lessons/04-files-errors/README.md) | 已准备 | 未提交 | 待验收 |
-| 05 | [类型、对象与SDK常见语法](../lessons/05-types-objects/README.md) | 已准备 | 未提交 | 待验收 |
-| 06 | [异步、超时、取消与测试](../lessons/06-async-testing/README.md) | 已准备 | 未提交 | 待验收 |
-| 07 | [需求边界与可验收目标](../lessons/07-requirements/README.md) | 已准备 | 未提交 | 待验收 |
-| 08 | [模型API、上下文与成本](../lessons/08-model-api/README.md) | 已准备 | 未提交 | 待验收 |
+| 05 | [类型、对象与SDK常见语法](../lessons/05-types-objects/README.md) | 已修订 | 未提交 | 待验收 |
+| 06 | [异步、超时、取消与测试](../lessons/06-async-testing/README.md) | 已修订 | 未提交 | 待验收 |
+| 07 | [需求边界与可验收目标](../lessons/07-requirements/README.md) | 已修订 | 未提交 | 待验收 |
+| 08 | [模型API、上下文与成本](../lessons/08-model-api/README.md) | 已修订 | 未提交 | 待验收 |
 | 09 | [提示词结构、版本与评估](../lessons/09-prompt-engineering/README.md) | 已准备 | 未提交 | 待验收 |
 | 10 | [结构化输出、SSE与取消](../lessons/10-structured-streaming/README.md) | 已准备 | 未提交 | 待验收 |
 | 11 | [工具契约与参数校验](../lessons/11-tool-contracts/README.md) | 已准备 | 未提交 | 待验收 |
-| 12 | [重试、幂等与不确定结果](../lessons/12-tool-reliability/README.md) | 已准备 | 未提交 | 待验收 |
-| 13 | [手写模型—工具循环](../lessons/13-agent-loop/README.md) | 已准备 | 未提交 | 待验收 |
+| 12 | [重试、幂等与不确定结果](../lessons/12-tool-reliability/README.md) | 已修订 | 未提交 | 待验收 |
+| 13 | [手写模型—工具循环](../lessons/13-agent-loop/README.md) | 已修订 | 未提交 | 待验收 |
 | 14 | [消息、事件与最小Runtime](../lessons/14-agent-runtime/README.md) | 已准备 | 未提交 | 待验收 |
 | 15 | [工作流、依赖与有限重规划](../lessons/15-workflow-planning/README.md) | 已准备 | 未提交 | 待验收 |
-| 16 | [澄清、审批与结果检查](../lessons/16-human-review/README.md) | 已准备 | 未提交 | 待验收 |
-| 17 | [文档导入与质量检查](../lessons/17-document-ingestion/README.md) | 已准备 | 未提交 | 待验收 |
-| 18 | [带引用的基础RAG](../lessons/18-basic-rag/README.md) | 已准备 | 未提交 | 待验收 |
+| 16 | [澄清、审批与结果检查](../lessons/16-human-review/README.md) | 已修订 | 未提交 | 待验收 |
+| 17 | [文档导入与质量检查](../lessons/17-document-ingestion/README.md) | 已修订 | 未提交 | 待验收 |
+| 18 | [带引用的基础RAG](../lessons/18-basic-rag/README.md) | 已修订 | 未提交 | 待验收 |
 | 19 | [检索优化与定位失败](../lessons/19-retrieval-optimization/README.md) | 已准备 | 未提交 | 待验收 |
 | 20 | [知识生命周期](../lessons/20-knowledge-lifecycle/README.md) | 已准备 | 未提交 | 待验收 |
 | 21 | [知识权限与冲突](../lessons/21-knowledge-permissions/README.md) | 已准备 | 未提交 | 待验收 |
@@ -102,35 +119,35 @@ python -m venv .venv
 | 24 | [长期记忆的来源与修正](../lessons/24-long-term-memory/README.md) | 已准备 | 未提交 | 待验收 |
 | 25 | [工作空间与任务恢复](../lessons/25-workspace-tasks/README.md) | 已准备 | 未提交 | 待验收 |
 | 26 | [按需加载的能力包](../lessons/26-skills/README.md) | 已准备 | 未提交 | 待验收 |
-| 27 | [LangGraph状态与中断](../lessons/27-langgraph/README.md) | 已准备 | 未提交 | 待验收 |
-| 28 | [本地MCP接入](../lessons/28-mcp-local/README.md) | 已准备 | 未提交 | 待验收 |
-| 29 | [远程MCP与故障边界](../lessons/29-mcp-remote/README.md) | 已准备 | 未提交 | 待验收 |
-| 30 | [职责划分与路由](../lessons/30-routing-roles/README.md) | 已准备 | 未提交 | 待验收 |
+| 27 | [LangGraph状态与中断](../lessons/27-langgraph/README.md) | 已修订 | 未提交 | 待验收 |
+| 28 | [本地MCP接入](../lessons/28-mcp-local/README.md) | 已修订 | 未提交 | 待验收 |
+| 29 | [远程MCP与故障边界](../lessons/29-mcp-remote/README.md) | 已修订 | 未提交 | 待验收 |
+| 30 | [职责划分与路由](../lessons/30-routing-roles/README.md) | 已修订 | 未提交 | 待验收 |
 | 31 | [主控与子Agent委派](../lessons/31-supervisor-workers/README.md) | 已准备 | 未提交 | 待验收 |
 | 32 | [Handoff控制权交接](../lessons/32-handoff/README.md) | 已准备 | 未提交 | 待验收 |
 | 33 | [并行任务与依赖](../lessons/33-parallel-dependencies/README.md) | 已准备 | 未提交 | 待验收 |
 | 34 | [通信契约与共享状态](../lessons/34-contracts-state/README.md) | 已准备 | 未提交 | 待验收 |
 | 35 | [生成检查与证据冲突](../lessons/35-review-conflicts/README.md) | 已准备 | 未提交 | 待验收 |
 | 36 | [协作失败与总预算](../lessons/36-failure-budgets/README.md) | 已准备 | 未提交 | 待验收 |
-| 37 | [跨服务Agent与A2A](../lessons/37-a2a-remote/README.md) | 已准备 | 未提交 | 待验收 |
-| 38 | [架构评估与选择](../lessons/38-architecture-evaluation/README.md) | 已准备 | 未提交 | 待验收 |
-| 39 | [FastAPI服务与事件接口](../lessons/39-fastapi-service/README.md) | 已准备 | 未提交 | 待验收 |
-| 40 | [Spring Boot契约与身份](../lessons/40-java-integration/README.md) | 已准备 | 未提交 | 待验收 |
+| 37 | [跨服务Agent与A2A](../lessons/37-a2a-remote/README.md) | 已修订 | 未提交 | 待验收 |
+| 38 | [架构评估与选择](../lessons/38-architecture-evaluation/README.md) | 已修订 | 未提交 | 待验收 |
+| 39 | [FastAPI服务与事件接口](../lessons/39-fastapi-service/README.md) | 已修订 | 未提交 | 待验收 |
+| 40 | [Spring Boot契约与身份](../lessons/40-java-integration/README.md) | 已修订 | 未提交 | 待验收 |
 | 41 | [持久化、事务与恢复](../lessons/41-persistence/README.md) | 已准备 | 未提交 | 待验收 |
 | 42 | [Worker队列与租约](../lessons/42-workers-queues/README.md) | 已准备 | 未提交 | 待验收 |
 | 43 | [审批、幂等与查证](../lessons/43-approval-idempotency/README.md) | 已准备 | 未提交 | 待验收 |
-| 44 | [评估数据与质量标准](../lessons/44-evaluation-data/README.md) | 已准备 | 未提交 | 待验收 |
-| 45 | [执行过程与回归测试](../lessons/45-trajectory-tests/README.md) | 已准备 | 未提交 | 待验收 |
-| 46 | [链路追踪、成本与脱敏](../lessons/46-observability/README.md) | 已准备 | 未提交 | 待验收 |
-| 47 | [提示注入、工具边界与沙箱](../lessons/47-injection-sandbox/README.md) | 已准备 | 未提交 | 待验收 |
-| 48 | [身份、最小权限与多租户隔离](../lessons/48-identity-tenancy/README.md) | 已准备 | 未提交 | 待验收 |
-| 49 | [部署、配置与健康检查](../lessons/49-deployment/README.md) | 已准备 | 未提交 | 待验收 |
-| 50 | [版本、发布门槛与回滚](../lessons/50-version-release/README.md) | 已准备 | 未提交 | 待验收 |
-| 51 | [性能、成本与容量治理](../lessons/51-capacity-cost/README.md) | 已准备 | 未提交 | 待验收 |
-| 52 | [备份恢复、事故与反馈闭环](../lessons/52-operations-recovery/README.md) | 已准备 | 未提交 | 待验收 |
+| 44 | [评估数据与质量标准](../lessons/44-evaluation-data/README.md) | 已修订 | 未提交 | 待验收 |
+| 45 | [执行过程与回归测试](../lessons/45-trajectory-tests/README.md) | 已修订 | 未提交 | 待验收 |
+| 46 | [链路追踪、成本与脱敏](../lessons/46-observability/README.md) | 已修订 | 未提交 | 待验收 |
+| 47 | [提示注入、工具边界与沙箱](../lessons/47-injection-sandbox/README.md) | 已修订 | 未提交 | 待验收 |
+| 48 | [身份、最小权限与多租户隔离](../lessons/48-identity-tenancy/README.md) | 已修订 | 未提交 | 待验收 |
+| 49 | [部署、配置与健康检查](../lessons/49-deployment/README.md) | 已修订 | 未提交 | 待验收 |
+| 50 | [版本、发布门槛与回滚](../lessons/50-version-release/README.md) | 已修订 | 未提交 | 待验收 |
+| 51 | [性能、成本与容量治理](../lessons/51-capacity-cost/README.md) | 已修订 | 未提交 | 待验收 |
+| 52 | [备份恢复、事故与反馈闭环](../lessons/52-operations-recovery/README.md) | 已修订 | 未提交 | 待验收 |
 | 53 | [多 Agent 调研助手项目](../lessons/53-research-project/README.md) | 已准备 | 未提交 | 待验收 |
 | 54 | [受控编码与数据分析助手项目](../lessons/54-coding-data-project/README.md) | 已准备 | 未提交 | 待验收 |
 | 55 | [浏览器与多模态助手项目](../lessons/55-browser-multimodal/README.md) | 已准备 | 未提交 | 待验收 |
-| 56 | [企业知识与工单协作助手：毕业交付](../lessons/56-capstone/README.md) | 已准备 | 未提交 | 待验收 |
+| 56 | [企业知识与工单协作助手：毕业交付](../lessons/56-capstone/README.md) | 已修订 | 未提交 | 待验收 |
 
 完整代码验证与外部环境边界见 [全课程验证报告](verification-report.md)。当前学习阶段仍为01；不要因材料完成直接跳过验收。

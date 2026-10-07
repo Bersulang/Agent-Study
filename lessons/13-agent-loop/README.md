@@ -49,6 +49,23 @@ ReAct结合推理与行动；工程循环是请求决策、执行允许工具、
 
 ## 演示命令与实际输出
 
+先运行动作列表示例，它让你先观察步数预算与停止原因：
+
+```powershell
+python lessons/13-agent-loop/examples/demo.py
+```
+
+再运行新增的[反馈循环示例](examples/feedback_loop.py)：
+
+```powershell
+python lessons/13-agent-loop/examples/feedback_loop.py
+```
+
+`run_agent`每轮把完整`history`交给`model(history)`函数参数；模型根据消息返回`Action`。执行器先追加assistant工具调用记录，再执行工具并追加`role=tool`观测，下一轮模型能读取这个新观测。`call_id`关联同一轮调用和结果。
+`demo_model`收到开放工单观测后选择只读`lookup_owner`，收到负责人信息后回答；若工单已关闭，则直接结束。改变工具返回的状态会改变下一步动作。
+预算按“模型决策轮数”计数；未知工具、非法动作、工具声明的`ValueError`作为受控失败观测返给模型，达到连续失败上限停止。其他编程错误继续抛出，避免被误当成业务失败；执行前拒绝bool、浮点数等非整数预算。
+本例工具都是离线只读夹具，没有实际审批或写操作。写工具需要先学习阶段12/16的服务端权限、幂等与审批机制。
+
 以下命令默认工作目录为项目根目录 `C:\Users\Mason\Desktop\agent-study`。
 PowerShell 中 `python` 是解释器命令，后面的路径是要执行的脚本，不是要切换的目录。
 如使用项目虚拟环境，可把 `python` 换成 `.\.venv\Scripts\python.exe`。
@@ -65,6 +82,8 @@ python lessons/13-agent-loop/examples/demo.py
 ```
 
 这份输出来自固定数据；它是可重复的程序行为，不是真实模型推理结果。
+
+两种示例都只验证控制循环如何管理消息和工具，不证明模型能选对动作。此反馈示例使用确定性模拟模型，不证明真实模型质量。
 
 ## 演示源码
 
@@ -150,9 +169,12 @@ Python运行时决定对象类型；类型标注即使存在，也不会自动�
 
 ## 独立练习
 
-实现solve(data)：data为动作列表，支持只读search和final，最多3步，未知工具直接停止；返回trace与reason。search接收query且不得空白；final不能为空。解释一步是否包含最终回答。
+本课练习分两节，均需完成：
 
-修改 [练习骨架](exercises/practice.py)，具体要求见 [练习说明](exercises/README.md)。
+1. **动作列表执行器**：实现`solve(data)`，支持只读search和final，最多3步，未知工具直接停止；返回trace与reason。search接收query且不得空白；final不能为空。解释一步是否包含最终回答。
+2. **反馈循环迁移**：设计接收消息历史的模型替身，让工具观测决定后续动作。开放工单要执行后续只读查询，关闭工单直接结束；完成未知工具/拒绝与预算停止案例。
+
+动作列表练习使用[原骨架](exercises/practice.py)，反馈迁移使用[独立骨架](exercises/feedback_practice.py)；细节见[练习说明](exercises/README.md)。两个文件都只提供TODO，不预写循环答案。
 完成后再阅读 [参考答案](solutions/solution.py)，答案文件不是学员作业。
 
 ```powershell
@@ -184,6 +206,8 @@ python lessons/13-agent-loop/solutions/solution.py
 
 ## 循环停止标签
 
+下表仅描述较早的动作列表演示`examples/demo.py`：
+
 | reason | 含义 |
 | --- | --- |
 | completed | 收到合法非空最终文本 |
@@ -194,3 +218,5 @@ python lessons/13-agent-loop/solutions/solution.py
 
 `enumerate(actions)`产生从0开始的索引；预算在索引>=max_steps时触发。
 本课只验证轨迹机制，脚本final即使与观察冲突也可能过形状校验，质量检查在16与评估阶段。
+
+反馈循环示例`examples/feedback_loop.py`使用`completed`、`step_budget`、`consecutive_failures`三种结束原因。它不使用`model_exhausted`或`invalid_action`作为最终reason；非法动作会成为失败观测，在达到连续失败上限时结束。

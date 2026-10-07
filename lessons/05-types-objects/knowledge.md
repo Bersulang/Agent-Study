@@ -1,6 +1,6 @@
 # 阶段05知识整理：类型、对象与SDK常见语法
 
-关联课程：[讲义](README.md)；例子：[可运行演示](examples/demo.py)。
+关联课程：[讲义](README.md)；例子：[综合演示](examples/demo.py)、[普通类与组合](examples/01_class_composition.py)、[类型标注与数据类](examples/02_types_dataclass.py)、[推导式与解包](examples/03_comprehension_unpacking.py)、[生成器](examples/04_generators.py)、[装饰器](examples/05_decorators.py)。
 
 ## 类、实例与组合
 

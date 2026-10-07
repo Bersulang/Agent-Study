@@ -47,6 +47,18 @@
 
 用途与例子：wraps保存原函数元信息；包装器用*args/**kwargs传递位置/关键字参数。
 
+## 分小节学习与预测题
+
+先运行短示例，再读下方综合演示。每次先预测输出，执行后解释变量的新旧值和调用顺序。以下命令均从项目根目录运行；使用项目虚拟环境时把`python`替换为`.\.venv\Scripts\python.exe`。
+
+1. [普通类与组合](examples/01_class_composition.py)：运行 `python lessons/05-types-objects/examples/01_class_composition.py`。`__init__`在创建对象时设置字段；`self`指当前工单实例。找不到工单时执行示例里的显式`return None`。
+2. [类型标注与数据类](examples/02_types_dataclass.py)：运行 `python lessons/05-types-objects/examples/02_types_dataclass.py`。dataclass生成常见构造方法；`__post_init__`随后显式校验。试传`True`，观察它被拒绝，类型标注本身不做运行时校验。
+3. [推导式与解包](examples/03_comprehension_unpacking.py)：运行 `python lessons/05-types-objects/examples/03_comprehension_unpacking.py`。推导式逐项筛选并生成新列表，不改原列表。先预测字段数不匹配时的解包异常，再试三元素元组。
+4. [生成器](examples/04_generators.py)：运行 `python lessons/05-types-objects/examples/04_generators.py`。执行到`yield`会产出一项并暂停；下次迭代从暂停位置继续。生成器耗尽后不能自动从头开始。
+5. [装饰器阅读](examples/05_decorators.py)：运行 `python lessons/05-types-objects/examples/05_decorators.py`。`@log_call`等价于定义后执行`ticket_count = log_call(ticket_count)`；`*args/**kwargs`转交参数，`return`把结果交回调用者。初学要求读懂和使用，不要求编写复杂装饰器。
+
+Java对照：普通类接近POJO，dataclass像便捷DTO但不自动校验；Java有编译期类型检查，Python类型标注不自动执行运行时校验。装饰器会包装并替换函数对象，和仅供框架读取的Java注解不同。
+
 ## 演示命令与实际输出
 
 以下命令默认工作目录为项目根目录 `C:\Users\Mason\Desktop\agent-study`。

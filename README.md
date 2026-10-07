@@ -41,6 +41,7 @@ python -m venv .venv
 | 文档 | 用途 |
 | --- | --- |
 | [完整进阶路线与课程目录](docs/roadmap.md) | 12 个模块、56 个能力阶段；每阶段可直接打开 |
+| [连续项目里程碑](docs/milestones.md) | 把阶段成果接成五个可运行、可验收的主项目增量 |
 | [知识文档](docs/knowledge.md) | 持续维护的概念、Java 对照、命令和易错点 |
 | [学习进度](docs/progress.md) | 分开记录材料状态、练习状态和能力验收 |
 | [教学方式](docs/teaching-guide.md) | 每课怎样讲、练、检查和维护注释 |
@@ -80,6 +81,7 @@ agent-study/
 ├── AGENTS.md                       # 后续教学与维护约定
 ├── docs/
 │   ├── roadmap.md                  # 全部 56 个阶段
+│   ├── milestones.md               # 同一主项目的五个集成里程碑
 │   ├── knowledge.md                # 累积知识手册
 │   ├── progress.md                 # 学习与交付状态
 │   ├── teaching-guide.md           # 教学方式

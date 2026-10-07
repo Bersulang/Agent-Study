@@ -47,6 +47,18 @@ unittest将预期行为写成断言；Mock替换外部依赖，使失败可重�
 
 用途与例子：IsolatedAsyncioTestCase每个异步测试隔离事件循环；不要依赖真实网络时延。
 
+## 分小节学习与预测题
+
+先运行短示例，再读下方并发工单综合演示。命令从项目根目录运行；先预测结果或异常，再执行并解释等待期间的状态变化。
+
+1. [同步测试](examples/01_sync_test.py)：运行 `python lessons/06-async-testing/examples/01_sync_test.py`。`unittest.main()`发现并运行测试类；断言检查业务结果，不依赖外部网络。
+2. [协程与await](examples/02_await.py)：运行 `python lessons/06-async-testing/examples/02_await.py`。调用`async def`得到协程对象；`asyncio.run`驱动顶层协程，内部用`await`让出执行权。
+3. [并发与限流](examples/03_concurrency.py)：运行 `python lessons/06-async-testing/examples/03_concurrency.py`。先创建协程列表，再用`gather(*tasks)`调度；星号将列表展开成多个位置参数。信号量限制同时进入的查询数，不代表CPU并行。
+4. [超时与取消](examples/04_timeout_cancel.py)：运行 `python lessons/06-async-testing/examples/04_timeout_cancel.py`。`wait_for`在期限到达时请求取消；如果工具已完成外部写入，取消不能撤回副作用。
+5. [异步测试](examples/05_async_test.py)：运行 `python lessons/06-async-testing/examples/05_async_test.py`。异步测试方法也需`async def`，测试中`await`实际函数，再用断言检查返回值。
+
+Java对照：Python协程由事件循环调度，不自动创建线程；等待方式可类比异步HTTP客户端/CompletableFuture。`Semaphore`与Java许可计数器用途相近，同步阻塞I/O会占住事件循环。
+
 ## 演示命令与实际输出
 
 以下命令默认工作目录为项目根目录 `C:\Users\Mason\Desktop\agent-study`。

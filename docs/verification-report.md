@@ -2,6 +2,42 @@
 
 验证日期：2026-10-06。环境：Windows PowerShell、Python 3.12.10。
 
+## 本轮材料复核：2026-10-07
+
+从项目根目录执行`.\.venv\Scripts\python.exe tools/verify_course.py`，结果通过：56阶段、270个Python文件、225份Markdown、219条命令、172个标准库测试方法。该验证包含本轮课程材料静态检查及默认演示/练习/答案运行；通过只证明材料和机制测试可执行，不证明学员能力或外部服务集成。
+
+阶段13共12项测试通过（原有3项，新增反馈循环9项）；动作列表示例、反馈循环示例、练习待完成骨架和独立反馈参考解法均已单独运行。阶段05/06的10个新增短示例逐个运行，均退出码0；统一验证器不会自动运行这些新增文件，因此手工执行结果单列记录。
+
+本次手工验证命令（项目根目录，PowerShell）：
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s lessons/13-agent-loop/tests -v
+.\.venv\Scripts\python.exe lessons/13-agent-loop/examples/demo.py
+.\.venv\Scripts\python.exe lessons/13-agent-loop/examples/feedback_loop.py
+.\.venv\Scripts\python.exe lessons/13-agent-loop/exercises/feedback_practice.py
+.\.venv\Scripts\python.exe lessons/13-agent-loop/solutions/feedback_solution.py
+
+$python = '.\.venv\Scripts\python.exe'
+$scripts = @(
+  'lessons/05-types-objects/examples/01_class_composition.py',
+  'lessons/05-types-objects/examples/02_types_dataclass.py',
+  'lessons/05-types-objects/examples/03_comprehension_unpacking.py',
+  'lessons/05-types-objects/examples/04_generators.py',
+  'lessons/05-types-objects/examples/05_decorators.py',
+  'lessons/06-async-testing/examples/01_sync_test.py',
+  'lessons/06-async-testing/examples/02_await.py',
+  'lessons/06-async-testing/examples/03_concurrency.py',
+  'lessons/06-async-testing/examples/04_timeout_cancel.py',
+  'lessons/06-async-testing/examples/05_async_test.py'
+)
+foreach ($script in $scripts) {
+  & $python $script
+  if ($LASTEXITCODE -ne 0) { throw "Failed: $script" }
+}
+```
+
+本轮未调用付费/远程真实模型、真实Embedding、Spring Boot、Docker或目标生产身份服务。真实集成能力仍待验收；本轮结论不改变下方2026-10-06历史SDK状态。
+
 ## 验证方法
 
 统一入口为`python tools/verify_course.py`：检查56阶段材料、教学源码编译、本地Markdown链接、默认演示、练习骨架、参考答案和标准库回归。机器可读结果写入忽略目录`artifacts/verification-report.json`。

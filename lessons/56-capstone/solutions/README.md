@@ -1,5 +1,9 @@
 # 毕业练习参考实现与交付说明
 
+## 阅读提示
+
+先独立完成[练习与毕业交付](../exercises/README.md)，尤其是完整验收矩阵和真实证据；之后再阅读参考实现。下方代码仅是课程机制参考，不替代新需求、目标环境、质量/延迟/成本阈值和部署恢复的学员交付。
+
 ## 对应每项要求
 
 1. 新知识资料见 [knowledge_extension.py](knowledge_extension.py)，包含有效来源、未知资料和跨租户无证据；新增只读工具是示例Assistant.ticket_summary，按身份tenant限定查询。

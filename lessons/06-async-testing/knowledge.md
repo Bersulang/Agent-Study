@@ -1,6 +1,6 @@
 # 阶段06知识整理：异步、超时、取消与测试
 
-关联课程：[讲义](README.md)；例子：[可运行演示](examples/demo.py)。
+关联课程：[讲义](README.md)；例子：[综合演示](examples/demo.py)、[同步测试](examples/01_sync_test.py)、[await](examples/02_await.py)、[并发限流](examples/03_concurrency.py)、[超时取消](examples/04_timeout_cancel.py)、[异步测试](examples/05_async_test.py)。
 
 ## 协程与事件循环
 

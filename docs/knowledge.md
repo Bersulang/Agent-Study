@@ -114,6 +114,15 @@ print("企业知识与工单助手")
 
 下面是可复习的逐课知识，每课链接到详细讲义、代码和参考资料。材料已交付不等于能力已通过。
 
+## 本次新增与修订概念
+
+- **连续项目里程碑与增量契约**：课程小练习检验局部能力，项目关卡要求沿用旧成果并验收接口演进；见[阶段与项目路线](roadmap.md)、[里程碑交付](milestones.md)。
+- **机制验收与集成验收**：离线模拟证明确定控制逻辑，真实服务证据证明目标环境接通；待集成不阻塞无依赖学习，也不能记为完整通过；见[集成关卡映射](integrations.md)。
+- **单Agent反馈循环**：`history -> model -> action -> tool -> observation -> history`。函数可作为参数注入，工具结果决定下一轮动作；关联阶段13讲义和[feedback_loop.py](../lessons/13-agent-loop/examples/feedback_loop.py)。
+- **阶段05分层语法**：普通类/组合、类型标注/dataclass、推导和解包、生成器、装饰器阅读；关联[短示例](../lessons/05-types-objects/examples/01_class_composition.py)至`05_decorators.py`。
+- **阶段06分层异步**：同步测试、`await`、信号量并发、超时取消、异步测试；关联[短示例](../lessons/06-async-testing/examples/01_sync_test.py)至`05_async_test.py`。
+- **毕业验收矩阵与阈值证据**：覆盖成功、无证据、越权、审批变更、重放冲突、重启、故障定位、发布回滚和新需求；阈值须按场景预先制定并用真实证据报告；见[里程碑5](milestones.md#里程碑-5治理与毕业交付)。
+
 | 阶段 | 知识文档 | 对应讲义 |
 | --- | --- | --- |
 | 01 | [开发环境与第一个企业助手程序](../lessons/01-environment/README.md) | [讲义](../lessons/01-environment/README.md) |
