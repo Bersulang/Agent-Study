@@ -21,3 +21,21 @@ for trace, expected_error in invalid:
         print("拒绝轨迹：", trace, str(error))
     else:
         raise AssertionError("违规轨迹被错误接受")
+
+def solve(data):
+    """检查离线轨迹中审批、撤销和终态对写动作的约束。"""
+    approved, revoked, finished = False, False, bool(data.get("finished", False))
+    reads = writes = 0
+    violations = []
+    for event in data["events"]:
+        if finished:
+            if event in {"read", "write"}: violations.append("finished_task")
+            continue
+        if event == "approved": approved, revoked = True, False
+        elif event == "revoked": revoked = True
+        elif event == "read": reads += 1
+        elif event == "write":
+            if approved and not revoked: writes += 1
+            else: violations.append("write_without_current_approval")
+        elif event == "finished": finished = True
+    return {"allowed_reads": reads, "allowed_writes": writes, "violations": violations}

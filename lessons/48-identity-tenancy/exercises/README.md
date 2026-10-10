@@ -6,10 +6,18 @@
 
 ## 提交
 
-提交 practice.py、至少一个成功和两个失败案例的结果、设计原因。
+提交练习代码；自动校验命令会保存运行结果。设计原因可在验收对话中说明。
 
 ## 验收
 
 演示请求伪造tenant会失败；说明JWT解码不等于验证签名；解释角色与业务审批为什么不能合并。
 
 完成后查看 [参考答案](../solutions/solution.py)，不要预先复制。
+
+## 自动校验接口
+
+实现`solve(data)`，必填`tenant`、`user`和`key`；可选`writer`和`approval`默认`false`，可选`body`和`token`仅用于验证脱敏。返回`cache_key`（包含tenant、user、key）、`allowed`和`audit`字典。只读请求允许；writer请求只有approval为真才允许。审计可记录租户、用户和允许结果，不得回显正文或token。真实身份验证与服务端审批来源仍需集成验收。
+
+自动校验只验证上述可重复的行为子集；涉及真实模型、服务、身份、部署或需要设计解释的部分，仍按本课集成任务独立验收。校验日志由统一命令自动保存，不要求手工粘贴命令输出。
+
+从项目根目录运行：`.\.venv\Scripts\python.exe tools/check_exercise.py 48`。

@@ -26,3 +26,6 @@ target/
 dist/
 build/
 *.egg-info/
+
+# 持久的本地学习状态，不能当作临时产物清理。
+.local/

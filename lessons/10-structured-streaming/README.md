@@ -9,10 +9,9 @@
 
 ## 学习目标
 
-- 能用自己的话解释本课概念，并用输入输出验证。
-- 能沿代码执行顺序解释状态如何变化。
-- 能处理本课失败案例，区分业务拒绝与程序错误。
-- 能独立完成扩展练习，提供实际运行证据。
+- 能区分传输块、SSE行、SSE事件和JSON对象四种边界。
+- 能解释UTF-8增量解码、空行提交和[DONE]应用完成标记如何共同决定是否有完整草稿。
+- 能校验草稿字段，并确保断流、无结束标记或调用者取消时不提交半成品。
 
 ## 前置知识与阅读顺序
 
@@ -25,27 +24,50 @@
 
 ### 1. JSON Schema与运行时校验
 
-Schema描述对象字段、类型与约束；结构化输出能力支持范围依供应商而变。
+要把模型草稿交给业务系统，先把对象形状写清楚。本课只接受两个键：`title`和`priority`；前者必须是去掉首尾空格后仍非空的字符串，后者必须是严格整数1—5。示例Schema用`additionalProperties: false`禁止多余字段，但运行时仍需逐项校验，因为服务可能收到绕过模型Schema的输入。
 
-用途与例子：title必填非空，priority整数1—5，additionalProperties=false拒绝额外字段；仍需业务验证。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
+
+```python
+if not isinstance(value, dict) or set(value) != {"title", "priority"}:
+    raise ValueError("字段必须恰好为title和priority")
+if not isinstance(value["title"], str) or not value["title"].strip():
+    raise ValueError("title必须非空")
+```
+
+即使JSON解析成功，`{"title":"登录失败","priority":true}`也不能通过严格priority规则；Python里bool是int子类。
+
+Java对照：Jackson能反序列化DTO，但字段验证仍应由validator或业务代码完成；Schema不能替代服务端校验。
 
 ### 2. 网络块与SSE事件
 
-网络read返回字节块，边界任意；SSE按UTF-8文本行解析，用空行提交事件。
+`read()`得到的是任意长度字节块，而不是一行或一个JSON。服务器可以把中文“登”拆在两个字节块中，或把一条`data:`行切成多个块。`codecs.getincrementaldecoder("utf-8")()`记住尚未凑完整的字节；文本`buffer`再保存没有结束换行的半行。
 
-用途与例子：一个事件可横跨多个字节块；中文可在多字节中间切开，必须增量解码。
+```python
+decoder = codecs.getincrementaldecoder("utf-8")()
+buffer = ""
+for chunk in chunks:
+    buffer += decoder.decode(chunk)
+```
+
+只有找到完整行结束符后才处理该行；CRLF算一个换行，块末尾单独的CR要等下一块判断。SSE事件在空行边界提交。
 
 ### 3. data行与完成标记
 
-多个data行以换行连接；注释心跳不产生业务数据；EOF不自动提交未终止事件。
+空行把本次积累的多条`data:`行作为一个事件产出，行与行之间以换行连接。冒号开头的注释行是心跳，不进入业务数据；普通SSE规范并没有通用的`[DONE]`字段，这是本课Chat风格应用约定。EOF只意味着传输结束，不会自动补出缺失空行或完成标记。
 
-用途与例子：[DONE]是本课Chat风格应用标记，不是SSE规范通用字段，Responses事件另有结构。
+示例wire把JSON刻意拆成两个SSE事件片段，再发`[DONE]`。`collect_draft`去掉SSE外层后拼接文本为完整JSON；生产Chat流通常还包在choices/delta JSON envelope中，需要先解envelope再累积content。
+
+<details><summary>先预测：有空行但无[DONE]，与data行后立即EOF（两者都无）分别会怎样？</summary>
+
+有空行时，parser会yield一个不完整事件，但`collect_draft`因没有[DONE]而抛`ValueError`，不解析或返回草稿。若空行和[DONE]都没有，SSE事件根本不会yield；循环结束后仍因缺少[DONE]抛`ValueError`。两种输入都不会提交半成品。
+</details>
 
 ### 4. 取消与提交边界
 
-取消使生成停止；只有完整完成并校验后才能发布草稿。
+`collect_draft`在本地`parts`里积累文本，只在读取到`[DONE]`、未被取消、成功拼成JSON并通过`validate_draft`之后才返回对象。取消检查在每个事件前及循环后执行；若取消，抛专用`StreamCancelled`，调用者应清理展示状态。UI可以显示“正在生成”预览，但预览不能当业务草稿提交。
 
-用途与例子：先展示临时文本，最终返回对象；取消或缺少完成标记丢弃未提交草稿。
+此机制只管流接收，不执行工单写入；模型返回合法草稿也必须经过后续权限、人工审批和写工具。
 
 ## 演示命令与实际输出
 
@@ -151,23 +173,17 @@ if __name__ == "__main__":
 
 ## 代码执行过程与逐段解释
 
-1. UTF-8增量解码器保留尚未完整的多字节字符；buffer保留跨块文本行。
-2. 扫描CR与LF，CRLF视为一个换行；末尾CR等待后续块，注释行跳过。
-3. 空行提交data列表；同一事件多行data用换行连接，不能逐read调用json.loads。
-4. collect_draft拼接不同delta事件，等[DONE]；取消会抛出专门异常。
-5. json.loads后validate_draft执行类型和字段校验；返回的只是草稿，写入另需审批。
+1. `wire.encode()`把包含中文的文本编码成字节，切片每3字节组成一块。块边界可能正好落在中文字符内部。
+2. 增量decoder逐块补齐UTF-8字符；`buffer`保留尚未见到行结束符的文本。parser遇到空行时，才把积累的data行以换行连接并yield事件。
+3. `collect_draft`收到第一个JSON片段后只将其放入`parts`，还不是可提交对象；第二段事件提供剩余字段文本。
+4. 收到`[DONE]`后设置`done=True`并结束读取；若调用者取消，则在此之前抛`StreamCancelled`。
+5. 两段文本拼接成JSON后`json.loads`生成dict，再验证精确字段、非空title和1—5整数priority，最终才返回草稿。
 
-执行时先读取局部输入，再沿分支或迭代更新局部状态，最后输出可核查的结果。
-不要只背函数名字：在每个赋值点记录旧值、新值，以及是否影响调用者对象。
-代码中的中文注释解释关键边界；从执行入口向上查找调用，能避免把定义误当执行。
+断流反例：仅有`data: {"title":`并不构成完整事件/完整生成；即使前端已显示部分字符，没有[DONE]也不能提交。
 
 ## Java 对照
 
-可类比Java InputStreamReader处理字节到字符，BufferedReader.readLine处理行；read(byte[])不能当消息边界。Python生成器以yield交付事件，消费者可以在完成后停止读取。
-
-Python 使用缩进表示代码块；同一块通常缩进四个空格。
-函数调用的圆括号、字典取值的方括号、字符串引号各有不同作用。
-Python运行时决定对象类型；类型标注即使存在，也不会自动执行输入校验。
+Java `InputStreamReader`与`BufferedReader`同样需要区分字节、字符和行；一次`read(byte[])`不是SSE事件边界。Python parser用生成器逐个yield完整事件，消费者再拼接应用层内容。无论语言为何，完整度和业务Schema都要显式确认。
 
 ## 易错点与排查
 
@@ -176,7 +192,7 @@ Python运行时决定对象类型；类型标注即使存在，也不会自动�
 - bool通过整数校验：Python bool继承int，严格Schema integer需特殊处理。
 - 断流自动修复：最多有限重试/修正，不能给半成品添加字段后执行工具。
 
-排查顺序：先看异常最后一行，再看本课文件中的调用位置，最后检查输入与前置条件。
+排查顺序：先查看原始字节块是否能完整UTF-8解码，再检查换行和空行事件边界；随后确认data累计、[DONE]完成标记和取消状态，最后检查JSON结构与业务字段。
 不要用 `except Exception: pass` 隐藏失败；保留可定位的错误并给调用者明确结果。
 
 ## 独立练习
@@ -193,18 +209,17 @@ python lessons/10-structured-streaming/solutions/solution.py
 
 ## 能力验收
 
-1. 不看答案解释三个核心概念，并指出演示中对应代码。
-2. 独立完成练习正常输入，再处理空输入与失败输入。
-3. 现场修改一个需求，先预测输出，再运行核查。
-4. 用Java经验说明一个相似点与一个重要差异。
-5. 提交实际命令、输出和失败修复说明；材料交付不计为学员通过。
+1. 将含中文字节流切成任意小块，仍能解析相同SSE事件；说明传输块不是事件边界。
+2. 校验title、priority及可选description；未知字段、空白标题和bool优先级均拒绝。
+3. 缺少[DONE]、调用者取消或超过累计字节限制时，证明没有草稿返回。
+4. 说明当前parser未实现重连、命名事件和供应商envelope适配。
+5. 自动校验保存本地案例结果；真实EventSource行为需独立集成验收。
 
 ## 企业工程延伸
 
 本课实现SSE数据字段与事件边界，未实现id重连、retry和命名事件分发；不是完整EventSource客户端。生产要处理连接超时、断连、流量上限与供应商事件JSON envelope。
 
-本课保留最小机制；真正上线还要结合后续权限、审计、持久化与评估阶段。
-扩展时先固定输入输出契约，再增加复杂性，避免把所有责任塞进一个函数。
+本课SSE parser识别字段和事件边界，但没有实现id重连、retry、命名事件和完整EventSource客户端。供应商JSON envelope应单独适配；草稿对象与正式写入仍由后续权限、审批和工具阶段控制。
 
 ## 官方资料与教学边界
 
@@ -223,3 +238,8 @@ python lessons/10-structured-streaming/solutions/solution.py
 生产Chat流通常发送包含choices/delta的JSON，先从SSE解析事件，再解析供应商envelope，最后累计content。
 字段修复必须有限次数且记录错误；本课故意拒绝非法对象，不把自动补全当可靠事实。
 缺少结束标记属于未完成，本课不会自动重试生成。取消后既不提交草稿也不执行工具。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 10`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

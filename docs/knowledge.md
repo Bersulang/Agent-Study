@@ -4,6 +4,12 @@
 
 ## 项目配置补充：虚拟环境与环境变量
 
+### 练习自动校验、断言与结果范围
+
+`python tools/check_exercise.py 01`使用预设输入检查学员的练习代码；失败提示是定位问题的依据。断言表示“预期这个条件成立”，与Java测试中的assertEquals/assertTrue用途相近。检查器不调用参考答案代替作业，空测试或仅打印“完成”不能代表通过。
+
+结果自动记录，代码和校验规则的指纹变化后需要重新检查。代码检查通过只证明已覆盖行为，不能证明真实模型质量或全部课程能力。关联：[自动校验操作](exercise-checks.md)、[阶段01练习](../lessons/01-environment/exercises/startup_card.py)、[统一检查入口](../tools/check_exercise.py)。
+
 - `.venv`保存日常课程的Python解释器与依赖，不提交Git。可选SDK按对应课程需要安装，类似为Java项目管理依赖集合。
 - `.env.example`是可提交的配置模板，`.env`是被忽略的本地配置文件。当前脚本只读进程环境变量，不能把它等同于Spring Boot自动加载的配置文件。
 
@@ -104,11 +110,19 @@ print("企业知识与工单助手")
 
 **操作：** `git init` 初始化；`git status` 查看；`git add README.md` 暂存指定文件；`git diff --cached` 查看暂存差异。
 
-**规则：** `.venv/`、缓存和真实密钥不纳入版本管理。本项目已有 `.gitignore`，本批未自动初始化或提交仓库。
+**规则：** `.venv/`、缓存和真实密钥不纳入版本管理。本项目已有 `.gitignore`和Git仓库，无需重复初始化；本次教学维护不自动提交。
 
 **易错点：** `.gitignore` 不会让已经跟踪的文件自动停止跟踪。未来配置凭证前，需要确认未进入版本管理。
 
 关联：[阶段 01：Git 入门](../lessons/01-environment/README.md)。
+
+## 从讲义学习，从问题复习
+
+首次学习打开各阶段README，从场景、小例子和执行过程建立理解；课后的knowledge用于回忆与检查，不要求先背术语。阶段02已改为“单张工单字典→工单列表→条件与循环→共享引用”的顺序，见[新版讲义](../lessons/02-basic-syntax/README.md)和[复习问题](../lessons/02-basic-syntax/knowledge.md)。
+
+本轮解释修订包括：整数与字符串是不可变对象（不是“通常不可变”）；赋值先求右值再绑定名字；浅复制只新建外层容器；元组不可变不保证内部列表不可变；and在本课比较表达式中得到布尔结果，但一般返回操作数。阶段02还解释get与写入、print与return的差别，使练习骨架不再越过前置语法。对应示例为[工单筛选](../lessons/02-basic-syntax/examples/demo.py)，逐个短片段在讲义中给出。
+
+全课程讲义按“问题→例子→执行推导→反例→独立迁移”组织，复习材料按具体问题重写。教学依据和维护标准见[教学方式](teaching-guide.md)。资料修改是材料维护，不代表学员已经掌握。
 
 ## 全部阶段知识索引
 
@@ -181,3 +195,13 @@ print("企业知识与工单助手")
 | 54 | [受控编码与数据分析助手项目](../lessons/54-coding-data-project/knowledge.md) | [讲义](../lessons/54-coding-data-project/README.md) |
 | 55 | [浏览器与多模态助手项目](../lessons/55-browser-multimodal/knowledge.md) | [讲义](../lessons/55-browser-multimodal/README.md) |
 | 56 | [企业知识与工单协作助手：毕业交付](../lessons/56-capstone/knowledge.md) | [讲义](../lessons/56-capstone/README.md) |
+
+练习校验的数据位置：`docs/progress.md`供人阅读，`.local/exercise-progress.json`保存程序需要的持久状态，首次运行校验时生成。后者不是可随意清理的缓存；例如阶段01通过后应保留该文件以供后续重验。参见[自动校验说明](exercise-checks.md)。
+
+### 开放题的自动校验边界（阶段01）
+
+自然表达可以有多种正确写法，例如“未做任何接入”可以描述当前能力，不必出现“能力”二字。自动检查应验证客观结构与行为，不能把标签匹配当成语义理解。见[阶段01启动卡片](../lessons/01-environment/README.md)与[校验说明](exercise-checks.md)。
+
+### 开放表达与接口契约（阶段02、09、13、17、18、23、35、41、53）
+
+自然语言解释可以自由表达，程序间约定的状态码和字段则需稳定。例如阶段13可以回答“工单已关闭”，以trace中的status判断分支；阶段09的分类标签仍需使用约定值。阶段23的source可以独立存储，避免把某一种文本包装当成唯一实现。详见[统一校验说明](exercise-checks.md)及对应课程练习页。

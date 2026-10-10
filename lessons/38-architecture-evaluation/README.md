@@ -15,31 +15,24 @@
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：先过质量门，再比较复杂度
 
-### 1. 统一评估集
+`FIXTURES`预先给出政策、工单、组合问题和期望值；single、workflow、multi都面对同一集合。evaluate逐题计分，只有全对者进入eligible，然后按手工逻辑成本选择。演示结果是workflow与multi都对3题，workflow成本2低于multi的4，因此被选择。
 
-定义与用途：所有实现面对同一输入和预先标注的期望结果。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：政策、工单、组合三条fixture统一用于single/workflow/multi。
+```python
+eligible = [name for name in scores if scores[name] == len(FIXTURES)]
+selected = min(eligible, key=lambda name: costs[name]) if eligible else "none"
+```
 
-### 2. 质量门槛
+<details><summary>先预测：workflow组合题故意回归后，成本更低还应被选吗？</summary>
 
-定义与用途：先满足业务质量，再比较成本或延迟。
+不应；它未过质量门，multi成为唯一全对方案。这个排序说明质量门优先于成本。
 
-具体例子：只有全部三题正确的架构进入eligible。
+</details>
 
-### 3. 成本与延迟
-
-定义与用途：成本是资源消耗，延迟是用户等待，二者不可混为一谈。
-
-具体例子：本课costs为手工逻辑单位，不是真实token或毫秒。
-
-### 4. 维护取舍
-
-定义与用途：在达到门槛的实现里选择复杂度与资源合理的方案。
-
-具体例子：workflow正确率相同时成本2小于multi的4，优先workflow。
+反例：每种架构用不同题目，分数不能比较；把逻辑成本表写成真实价格或延迟基准也属误报。真实选择要固定评估集，测正确性、权限违规、工具轨迹、p95和实际调用费用。阶段38可预习，但核心服务完成后再做正式比较更有依据。
 
 ## 演示与默认命令
 
@@ -112,7 +105,6 @@ def run_case(case):
 4. eligible先筛质量，min再按逻辑成本排序。
 5. regression故意破坏workflow组合题，观察选择变化。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -152,7 +144,7 @@ python lessons/38-architecture-evaluation/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“统一评估集”与“质量门槛”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`regression`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -171,3 +163,8 @@ python lessons/38-architecture-evaluation/exercises/practice.py
 
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [LangChain多Agent模式](https://docs.langchain.com/oss/python/langchain/multi-agent)：用来对比路由、主控及交接，本课未依赖框架。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 38`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

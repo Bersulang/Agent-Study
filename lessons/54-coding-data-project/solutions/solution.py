@@ -26,3 +26,15 @@ with closing(sqlite3.connect(":memory:")) as con:
         api["report"](con, "A", "DELETE FROM tickets")
     except PermissionError:
         print("任意SQL报告被拒绝")
+
+def solve(data):
+    """确认补丁路径处于工作区内，并让过期审查与失败测试保持未修复。"""
+    from pathlib import Path
+    root = Path(data["workspace"]).resolve()
+    candidate = (Path(data["path"])).resolve() if Path(data["path"]).is_absolute() else (Path.cwd() / data["path"]).resolve()
+    try: candidate.relative_to(root)
+    except ValueError: return {"allowed": False, "stale": data.get("current") != data.get("reviewed"), "diff": None, "status": "blocked"}
+    stale = data.get("current") != data.get("reviewed")
+    passed = data.get("tests_passed", True)
+    status = "fixed" if passed and not stale else "pending"
+    return {"allowed": True, "stale": stale, "diff": {"before": data.get("reviewed"), "after": data.get("current")}, "status": status}

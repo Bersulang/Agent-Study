@@ -35,5 +35,23 @@
 - 删除一个关键条件后，你的哪条验证会发现错误？
 - 这段代码迁移到真实服务时，哪个边界需要额外验证？
 
-提交练习代码、测试输入、实际命令和结果，并用自己的话解释一个失败路径。
+提交练习代码；命令和结果由自动校验保存。用自己的话解释一个失败路径作为理解验收。
 完成后再阅读[参考答案](../solutions/solution.py)，对照设计取舍，而不是只比变量名。
+
+
+## 自动练习校验
+
+从项目根目录运行：`.\.venv\Scripts\python.exe tools/check_exercise.py 41`。校验日志自动保存，无需手工粘贴命令输出。自动检查未覆盖的真实集成仍需按本课项目标准验收。
+
+
+## 自动校验接口
+
+实现`list_recoverable(store)`。接口契约：store为examples/demo.py的SQLite Store fixture；返回仅含new/ready记录的{id,state,version}字典列表。通过关闭并重连验证读取稳定，学生函数负责参数化SQL。
+
+自动检查调用的是学生练习函数，示例只提供离线数据/领域对象fixture，不代表真实外部服务或学员集成已经通过。命令与案例输出自动保存，无需手工粘贴。
+
+从项目根目录运行：`.\.venv\Scripts\python.exe tools/check_exercise.py 41`。
+
+### 开放表达与固定契约
+
+恢复记录可增加checked_at等诊断字段，稳定性比较只针对id/state/version业务字段。

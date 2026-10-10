@@ -8,7 +8,7 @@ runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runtime)
 
 
-def solve_feedback(ticket, owners):
+def solve_feedback(ticket, owners, max_steps=5):
     """运行只读工具反馈循环，使用本练习的工单和负责人数据。"""
 
     def lookup_ticket(ticket_id):
@@ -40,7 +40,7 @@ def solve_feedback(ticket, owners):
     return runtime.run_agent(model, {
         "lookup_ticket": lookup_ticket,
         "lookup_owner": lookup_owner,
-    })
+    }, max_steps=max_steps)
 
 
 if __name__ == "__main__":

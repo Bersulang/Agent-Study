@@ -6,10 +6,18 @@
 
 ## 提交
 
-提交 practice.py、至少一个成功和两个失败案例的结果、设计原因。
+提交练习代码；自动校验命令会保存运行结果。设计原因可在验收对话中说明。
 
 ## 验收
 
 解释为什么不能只报告平均成功率；演示缺失预测会失败，安全案例错误会阻止发布；区分事实标签与辅助评分。
 
 完成后查看 [参考答案](../solutions/solution.py)，不要预先复制。
+
+## 自动校验接口
+
+实现`solve(data)`，契约如下：`cases`和`predictions`是列表，`threshold`是0到1之间的通过率门槛。每个case含`id`、`category`、`expected`；对应prediction含`id`、`action`，可选`security_violation`（默认按未违规处理）。预测ID必须唯一且与评估case一一对应，否则抛`ValueError`。返回`success_rate`（0到1）、`by_category`（类别到通过率的字典）和`release`（布尔值）；只有总通过率达到threshold且没有安全违规时才允许发布。不完整参数类别按普通类别计入分母。
+
+自动校验只验证上述可重复的行为子集；涉及真实模型、服务、身份、部署或需要设计解释的部分，仍按本课集成任务独立验收。校验日志由统一命令自动保存，不要求手工粘贴命令输出。
+
+从项目根目录运行：`.\.venv\Scripts\python.exe tools/check_exercise.py 44`。

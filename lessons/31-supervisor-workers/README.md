@@ -8,37 +8,34 @@
 
 ## 学习目标与前置
 
-能制定最小任务计划、去重委派、检查缺失，并限制递归深度。
+能追踪任务ID去重、worker调用次数和缺失结果；区分必需与可选任务，并说明深度上限如何在委派前阻止递归。
 
 - 前置：阶段30的任务状态与失败处理；阶段03函数、04异常与05字典/集合。
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：主控怎样知道任务真的完成
 
-### 1. 主控
+`supervise`按原始任务列表协调worker，但用`task["id"]`识别逻辑任务。列表里重复出现knowledge时，`seen`让它只派发一次，避免worker重复读取或写入。深度限制发生在派发前：当前depth已经等于max_depth时，calls为0。
 
-定义与用途：负责拆解、委派和完成判断的编排角色。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：supervise依据原始task id集合检查缺失，而非数一数返回文本。
+```python
+if key in seen:
+    continue
+seen.add(key)
+worker = workers.get(task["role"])
+if worker is not None:
+    value = worker(task)
+```
 
-### 2. 子任务标识
+<details><summary>先预测：ticket worker返回None，knowledge成功，status是什么？</summary>
 
-定义与用途：稳定标识同一个逻辑任务，用于关联结果与去重。
+incomplete，因为missing按原始计划中已见任务和实际结果计算，而不是只看成功结果数量。练习把必需任务缺失作为阻断条件，可选任务缺失只放warnings。
 
-具体例子：knowledge任务重复出现在计划中，只调用reader一次。
+</details>
 
-### 3. 汇总契约
-
-定义与用途：规定必需结果齐全时才可以宣称任务完成。
-
-具体例子：ticket工作者返回None，整体状态为incomplete。
-
-### 4. 调用深度
-
-定义与用途：限制嵌套委派链长度，防止主控不断产生新的主控。
-
-具体例子：depth等于max_depth时直接depth_exceeded，不启动工作者。
+反例：用`len(results) == len(tasks)`判断完成，重复id会造成数量不匹配；若先对tasks去重又忘了缺少worker的任务，也可能误报成功。这个同步函数不实现模型委派或并行worker，仅说明任务身份、深度和完成门槛。
 
 ## 演示与默认命令
 
@@ -107,7 +104,6 @@ def run_case(case):
 4. results只保存有效值，None表示缺失，而非空字符串。
 5. seen减results.keys得到missing，缺失会阻止成功状态。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -147,7 +143,7 @@ python lessons/31-supervisor-workers/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“主控”与“子任务标识”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`depth`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -166,3 +162,8 @@ python lessons/31-supervisor-workers/exercises/practice.py
 
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [LangChain多Agent模式](https://docs.langchain.com/oss/python/langchain/multi-agent)：用来对比路由、主控及交接，本课未依赖框架。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 31`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

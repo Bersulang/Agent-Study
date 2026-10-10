@@ -29,3 +29,13 @@
 独立扩展新需求；通过越权、过期、撤销、冲突、重放与重启案例；展示质量、延迟与成本的约定门槛及验证结果。不能将教学夹具的通过率写成真实模型评估结果。
 
 完成后查看 [参考答案](../solutions/solution.py)，不要预先复制。
+
+## 自动校验接口
+
+实现`solve(data)`，契约如下：
+
+`data`含本次`action`和`approved_action`、布尔值`approved`、当前时间`now`和审批期限`expires_at`；缺少字段时分别按None、false、0和0处理。仅当`approved is True`、动作完全相等且`now < expires_at`时允许执行。`operations`可选，默认空列表，每项含`key`、`digest`、`result`；本次查询用顶层`key`和`digest`匹配记录：同键同摘要返回`status: "completed"`，同键不同摘要返回`"conflict"`，无记录返回`"unknown"`。`restarted`可选，默认false，仅作为离线报告标记，`recovered`返回其布尔值；这不执行真实进程重启或SQLite恢复。输出字段为`allowed`、`status`、`recovered`。完整主项目交付、真实身份、持久队列、部署回滚、质量/延迟/成本测量仍按毕业集成演练验收。
+
+自动校验只验证上述可重复的行为子集；涉及真实模型、服务、身份、部署或需要设计解释的部分，仍按本课集成任务独立验收。校验日志由统一命令自动保存，不要求手工粘贴命令输出。
+
+从项目根目录运行：`.\.venv\Scripts\python.exe tools/check_exercise.py 56`。

@@ -9,10 +9,10 @@
 
 ## 学习目标
 
-- 能用自己的话解释本课概念，并用输入输出验证。
-- 能沿代码执行顺序解释状态如何变化。
-- 能处理本课失败案例，区分业务拒绝与程序错误。
-- 能独立完成扩展练习，提供实际运行证据。
+- 创建普通类实例，区分类、self、实例字段与组合。
+- 读懂dataclass和类型标注，并指出字段校验实际在哪里执行。
+- 把推导式还原成循环，解释解包与yield的执行过程。
+- 将简单装饰器还原成函数赋值，确认参数和返回值如何传递。
 
 ## 前置知识与阅读顺序
 
@@ -25,37 +25,102 @@
 
 ### 1. 类、实例与组合
 
-类描述对象结构；实例拥有具体字段；组合表示一个对象使用另一个对象服务。
+先只创建一个有两个字段的对象，不引入装饰器或类型标注：
 
-用途与例子：Ticket代表一条工单；Repository保存Ticket，不必继承Ticket。
+```python
+# class定义一种对象；__init__在初始化每个实例时保存它自己的字段。
+class Ticket:
+    def __init__(self, ticket_id, priority):
+        self.ticket_id = ticket_id
+        self.priority = priority
+
+first = Ticket("T-1", 4)
+second = Ticket("T-2", 2)
+print(first.priority)
+print(second.priority)
+```
+
+输出依次为4、2。执行class语句得到类对象Ticket；调用Ticket时产生实例，并运行初始化过程。`self`表示正在初始化的那个实例，所以给first设置的priority不会自动变成second的priority。`self.priority`是对象上的属性，单独的`priority`是本次调用接收的参数。两个名字写法相似，位置却不同。
+
+
+字典`{"ticket_id":"T-1","priority":4}`可以装字段，但每处都要记住键名和访问方式。类把字段与围绕字段的行为放在一起：`Ticket("T-1", 4)`创建一个工单实例，`ticket.priority`读取它的优先级。`TicketRepository`把工单列表保存为`self.tickets`并提供`find`，这是组合：仓库“拥有/使用”工单对象，而不是“是一种”工单。
+
+在[普通类示例](examples/01_class_composition.py)里，`__init__(self, ticket_id, priority)`在创建实例时执行；`self`是当前实例，所以`self.ticket_id = ticket_id`把传入值保存在对象上。`repository.find("T-1")`返回工单对象，随后`.priority`得到4；查找不到时显式返回`None`。构造仓库时`list(tickets)`复制外层列表，但列表里的Ticket对象仍是同一批对象。
+
+Java对照：`Ticket`接近普通Java对象，`TicketRepository`接近持有DAO/实体集合的服务。Python写出`self`参数，调用者不传它；实例字段也无需先声明在类体里。
+
+<details><summary>先预测：find("T-9")返回None后，立即写 find("T-9").priority 会怎样？</summary>
+
+会因`None`没有`priority`属性而抛`AttributeError`。调用者应先检查是否找到对象；查无记录是正常业务结果，不一定要抛异常。
+</details>
 
 ### 2. 数据类与类型标注
 
-@dataclass生成初始化等常见方法；field: str说明预期类型，不自动验证。
+普通类的`__init__`常只负责把参数赋给字段。`@dataclass`为数据承载类生成常见方法，演示里的`Ticket`因此可以写成`Ticket("T-2", 3)`，并得到可读的对象表示。`ticket_id: str`和`priority: int`说明开发者预期的数据类型，但Python运行时仍允许传入不合规值。
 
-用途与例子：__post_init__显式拒绝空id与越界priority；bool是int子类，严格整数可用type(value) is int。
+dataclass生成的初始化方法赋值完成后，会调用`__post_init__`。这里先用`isinstance(ticket_id, str)`确认类型，再调用`.strip()`去掉首尾空白并检查非空；`priority`要求`type(value) is int`且范围1—5。用`type(...) is int`是因为`bool`是`int`的子类：`isinstance(True, int)`为真，但工单优先级`True`没有业务意义。
+
+Java对照：Java有编译期类型检查；Python类型标注不自动做运行时校验。dataclass像便捷DTO，但不是自动校验器，也默认可变。
+
+<details><summary>先预测：Ticket("T-3", True)会通过priority的isinstance(value, int)检查吗？</summary>
+
+会，因为`bool`继承自`int`；本例特意用`type(value) is int`拒绝True和False。只检查注解不会阻止该输入。
+</details>
 
 ### 3. 推导式、解包与生成器
 
-推导式构造容器；解包将多个值绑定变量；yield每次产生一个值并暂停。
+先写熟悉的循环，再与紧凑写法对照。下面的两个列表内容相同：
 
-用途与例子：[t.id for t in tickets]生成完整列表；生成器逐条处理，避免全量物化。
+```python
+# 普通写法先建立空列表，再逐项判断和追加。
+priorities = [5, 2, 4]
+selected = []
+for priority in priorities:
+    if priority >= 4:
+        selected.append(priority)
+
+# 推导式只是把同一过程写进一行；不是先执行最左侧表达式。
+compact = [priority for priority in priorities if priority >= 4]
+print(selected)
+print(compact)
+```
+
+两次输出都是`[5, 4]`。阅读推导式时先看for的输入，再看if筛选，最后看最左侧留下什么；不能按书写位置误以为左边的priority在循环绑定前就被求值。等普通循环能解释清楚，再用推导式减少重复语法。
+
+
+短小的数据转换可写成列表推导式`[表达式 for 名称 in 可迭代对象 if 条件]`。示例按顺序读取工单元组，只对priority至少4的行保留ID，结果是新列表。`first_id, first_priority = tickets[0]`把二元组的两个值分别绑定到两个名字；左右数量不相等会抛`ValueError`。
+
+生成器函数里出现`yield`后，调用`urgent_tickets(tickets)`先返回生成器对象，函数体不会立即跑完。`for`每次请求一个值，函数运行到`yield`时交出当前工单并暂停，下一轮再从暂停处继续查找。它可以逐条处理大集合而不建立完整结果列表，但同一个生成器消费完后已经耗尽。
+
+Java对照：列表推导式接近Stream的filter/map后收集成List；生成器是惰性迭代，和一次性迭代器更接近，不能假定重复遍历会重放。
+
+<details><summary>先预测：tickets有3项，只满足urgent条件的有2项。推导式结果长度是多少？同一个生成器list两次呢？</summary>
+
+推导式创建的列表长度是2。若把同一个生成器先`list(generator)`一次，第二次通常得到空列表，因为第一次迭代已经把它消费完。
+</details>
 
 ### 4. 装饰器
 
-装饰器接收函数并返回替代函数；@decorator等价于func=decorator(func)。
+装饰器是一个接收函数并返回另一个函数的函数。定义`@log_call`下面的`ticket_count`时，Python先建立原函数对象，再执行`ticket_count = log_call(ticket_count)`，名称最终指向包装器。调用新函数时，包装器先打印函数名，再把参数转交给原函数，最后把原函数返回值交回调用者。
 
-用途与例子：wraps保存原函数元信息；包装器用*args/**kwargs传递位置/关键字参数。
+`*args`把收到的位置参数收集为tuple，`**kwargs`把关键字参数收集为dict；在调用`function(*args, **kwargs)`时，星号反过来展开参数。`return function(...)`不能漏掉，否则原函数算出的2会丢失，调用者只得到`None`。`@wraps(function)`让包装器保留原函数的名称等元信息，便于调试。
+
+Java对照：装饰器会改变函数名当前绑定到的可调用对象；Java注解通常只是元数据，运行逻辑需框架反射或编译插件另行处理。本课要求能读懂常见包装器，不要求一开始写复杂装饰器。
+
+<details><summary>先预测：删掉wrapper里的return，ticket_count(["T-1"])会返回几？</summary>
+
+返回`None`。包装器仍会调用原函数，但没有把原函数结果返回。日志出现不代表被包装的业务函数结果仍被保留。
+</details>
 
 ## 分小节学习与预测题
 
 先运行短示例，再读下方综合演示。每次先预测输出，执行后解释变量的新旧值和调用顺序。以下命令均从项目根目录运行；使用项目虚拟环境时把`python`替换为`.\.venv\Scripts\python.exe`。
 
-1. [普通类与组合](examples/01_class_composition.py)：运行 `python lessons/05-types-objects/examples/01_class_composition.py`。`__init__`在创建对象时设置字段；`self`指当前工单实例。找不到工单时执行示例里的显式`return None`。
-2. [类型标注与数据类](examples/02_types_dataclass.py)：运行 `python lessons/05-types-objects/examples/02_types_dataclass.py`。dataclass生成常见构造方法；`__post_init__`随后显式校验。试传`True`，观察它被拒绝，类型标注本身不做运行时校验。
-3. [推导式与解包](examples/03_comprehension_unpacking.py)：运行 `python lessons/05-types-objects/examples/03_comprehension_unpacking.py`。推导式逐项筛选并生成新列表，不改原列表。先预测字段数不匹配时的解包异常，再试三元素元组。
-4. [生成器](examples/04_generators.py)：运行 `python lessons/05-types-objects/examples/04_generators.py`。执行到`yield`会产出一项并暂停；下次迭代从暂停位置继续。生成器耗尽后不能自动从头开始。
-5. [装饰器阅读](examples/05_decorators.py)：运行 `python lessons/05-types-objects/examples/05_decorators.py`。`@log_call`等价于定义后执行`ticket_count = log_call(ticket_count)`；`*args/**kwargs`转交参数，`return`把结果交回调用者。初学要求读懂和使用，不要求编写复杂装饰器。
+1. [普通类与组合](examples/01_class_composition.py)：运行 `python lessons/05-types-objects/examples/01_class_composition.py`，输出`4`。先预测仓库保存的是Ticket还是Ticket的子类，再追踪`TicketRepository([Ticket(...)])`如何把对象放进`self.tickets`。把ID改成`T-9`，观察`find`明确执行`return None`。
+2. [类型标注与数据类](examples/02_types_dataclass.py)：运行 `python lessons/05-types-objects/examples/02_types_dataclass.py`，先看到合法实例。再把priority改成`True`或6：对象构造进入`__post_init__`后抛`ValueError`。`ticket_id`先确认是字符串再调用`strip`，避免非字符串输入先触发`AttributeError`。
+3. [推导式与解包](examples/03_comprehension_unpacking.py)：运行 `python lessons/05-types-objects/examples/03_comprehension_unpacking.py`，先预测T-1与T-3会入选，再对照输出。把首项换成三元素元组，观察二个变量不能解包三个值。
+4. [生成器](examples/04_generators.py)：运行 `python lessons/05-types-objects/examples/04_generators.py`，只打印T-1。调用函数时先得到生成器；`for`要值时函数才运行到`yield`，暂停后继续查T-2。先把返回值改成列表，比较全部物化与逐条产出的差异。
+5. [装饰器阅读](examples/05_decorators.py)：运行 `python lessons/05-types-objects/examples/05_decorators.py`，依次打印调用提示和数量2。把代码改写为`ticket_count = log_call(ticket_count)`可见`@`语法的真实顺序；再暂时删除wrapper里的return，预测并确认返回值为何丢失。初学要求读懂和使用，不要求编写复杂装饰器。
 
 Java对照：普通类接近POJO，dataclass像便捷DTO但不自动校验；Java有编译期类型检查，Python类型标注不自动执行运行时校验。装饰器会包装并替换函数对象，和仅供框架读取的Java注解不同。
 
@@ -125,23 +190,17 @@ if __name__ == "__main__":
 
 ## 代码执行过程与逐段解释
 
-1. 装饰器函数定义后，@dataclass处理Ticket，生成__init__等方法。
-2. Ticket("T1",5)先赋字段，再调用__post_init__，错误输入在对象边界拒绝。
-3. Repository复制外层列表，但内部Ticket对象仍共享，不能假设深复制。
-4. 调用urgent先执行wrapper；返回生成器对象，尚未遍历函数体。
-5. 列表推导式开始迭代生成器，yield产出T1；元组解包必须元素数匹配。
+1. Python读取装饰器定义时只创建函数；读到`@dataclass`时处理`Ticket`类，生成初始化等方法。它不会自动替注解检查输入。
+2. 创建`Ticket("T1", 5)`时，生成的初始化方法依次绑定字段，随后`__post_init__`验证：ID非空，priority是1—5的严格整数。若改成True，`type(True) is int`为假，构造在边界处停止。
+3. `Repository`执行`list(tickets)`产生新的外层列表；这只复制容器。若随后修改原列表的结构，仓库的列表不变；若修改其中共享Ticket对象的字段，两个列表看见的是同一个对象。
+4. 调用`repository.urgent()`时，装饰器包装器打印“调用：urgent”，再调用原方法。由于原方法含`yield`，此时获得的是生成器，循环体尚未完成。
+5. 列表推导式开始消费生成器。T1优先级5满足条件，于是yield交出T1；恢复后检查T2优先级2并跳过。推导式得到`['T1']`。随后二元组`('T1', 5)`被拆到两个变量，数量必须对应。
 
-执行时先读取局部输入，再沿分支或迭代更新局部状态，最后输出可核查的结果。
-不要只背函数名字：在每个赋值点记录旧值、新值，以及是否影响调用者对象。
-代码中的中文注释解释关键边界；从执行入口向上查找调用，能避免把定义误当执行。
+失败反例：把生成器当成列表直接打印，只会看到生成器对象描述；把解包右边换成三个值会报错；给注解`priority: int`却不写`__post_init__`，也不会自动拒绝字符串或True。
 
 ## Java 对照
 
-数据类接近Java DTO/record用途，但默认并非不可变；需要frozen=True才禁止通常的字段赋值。Pythonself显式出现在方法参数中，调用时自动传入。装饰器与Java注解不同：装饰器真实替换对象。
-
-Python 使用缩进表示代码块；同一块通常缩进四个空格。
-函数调用的圆括号、字典取值的方括号、字符串引号各有不同作用。
-Python运行时决定对象类型；类型标注即使存在，也不会自动执行输入校验。
+Java的POJO/record都能承载工单数据；Python dataclass少写构造与展示代码，但本课对象仍可变，且注解不会运行时校验。Python实例方法显式写`self`，调用者只写`repository.urgent()`，解释器把当前实例传入。Java Stream通常显式终结为List；Python推导式立即建列表，生成器则在消费时逐项执行。Java注解是元数据，Python装饰器会把函数名重新绑定到包装函数。
 
 ## 易错点与排查
 
@@ -171,7 +230,7 @@ python lessons/05-types-objects/solutions/solution.py
 2. 独立完成练习正常输入，再处理空输入与失败输入。
 3. 现场修改一个需求，先预测输出，再运行核查。
 4. 用Java经验说明一个相似点与一个重要差异。
-5. 提交实际命令、输出和失败修复说明；材料交付不计为学员通过。
+5. 自动校验保存运行命令、输出和案例结果；失败修复过程用于解释，不要求手工粘贴输出。
 
 ## 企业工程延伸
 
@@ -195,3 +254,8 @@ SDK常见数据类、类型标注、迭代器与装饰器。读接口时区分�
 `[(t.id,t.priority) for t in tickets if t.priority >= 4]`在每轮先筛选再生成元素。
 `yield ticket`产生一个值并暂停；函数包含yield时调用返回生成器，而非立即执行整段循环。
 生成器通常只能消费一次；反复list同一个生成器，第二次可能为空。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 05`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

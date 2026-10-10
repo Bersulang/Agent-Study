@@ -1,67 +1,14 @@
-# 阶段32知识：Handoff控制权交接
+# 阶段32复习：交接时限制事实与路径
 
-## 关联
+关联：[讲义](README.md)、[演示](examples/demo.py)、[练习](exercises/README.md)。
 
-[课程讲义](README.md) · [运行示例](examples/demo.py) · [练习](exercises/README.md)
+handoff先从facts提取ticket_id，丢弃private_note，再检查目标是否已在history中、是否超hop上限，最后验证目标角色及必需事实。成功才把owner切换到ticket；loop_blocked和hop_limit保持原owner。
 
-## 概念与业务落点
+先预测：接收者ticket在history里但事实完整，是否继续转交？不继续，避免循环。reader需要question、ticket需要ticket_id，缺少时应澄清；不得通过修改调用者facts补造字段。Java中可用不同角色的请求DTO限制传递数据；生产系统还需服务端授权。
 
-### 控制权
 
-谁负责下一轮用户交互和后续行动选择。
+## 进一步检查
 
-owner从reception变ticket；普通函数调用返回后owner通常不变。
+history保存的是控制权已走过的角色路径，所以交接循环判断要早于改变owner。hop限制同样在转移前检查；失败返回当前owner，让上游知道任务没有交出去。事实白名单有意很小：ticket角色只需要ticket_id，不应收到HR备注或整段对话。
 
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 交接上下文
-
-接收者完成职责所需的最小事实集合。
-
-保留ticket_id，过滤private_note。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 交接条件
-
-接收者能力和必需事实满足时才能改变owner。
-
-缺失ticket_id抛ValueError，不产生半完成交接。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 防环与跳数
-
-历史角色检测重复目标，同时限制最长转交链。
-
-ticket已经出现在history时返回loop_blocked；跳数到上限返回hop_limit。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-## 状态与失败路径
-
-- selected通过字典推导式构造新字典，不直接传递facts引用。
-- 循环检测发生在改变owner前，拒绝结果保持原owner。
-- len(history)-1是已经完成的交接次数。
-- 目标和必要字段校验通过后，才返回transferred。
-- run_case证明三种路径都不会带出private_note。
-
-## 易错解释
-
-- 把所有聊天历史传给所有角色：会泄露不必要的私人信息。
-- 只限制跳数不查环：短环也会耗尽预算和用户耐心。
-- 用owner名字授予权限：身份与授权仍应由服务验证。
-
-## Java对照
-
-Java工作流中修改assignee类似转移负责人；方法调用不等于assignee变化。Python字典浅拷贝也不能隔离嵌套可变对象。
-
-## 独立迁移
-
-扩展为reader与ticket两类接收者，分别校验question和ticket_id；缺失字段返回needs_clarification；不能改变输入事实。
-
-## 工程限制
-
-持久化交接事件与接收确认；并发会话需版本控制，防止两个角色同时认为自己是owner。
-
-默认行为是教学机制，不等于模型质量证明或生产系统认证。验收必须由学员独立完成并提供证据。
+先试缺少ticket_id：本demo对不满足合同的接收请求抛ValueError；独立练习要求把缺少question/ticket_id转换为needs_clarification。这是接口契约变化，不应把异常直接复制进练习。Java可为reader和ticket分别定义请求record，从类型层减少多余字段。

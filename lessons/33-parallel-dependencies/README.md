@@ -8,37 +8,32 @@
 
 ## 学习目标与前置
 
-能限制并发、设置超时、处理部分成功，并避免依赖未满足就汇总。
+能追踪并发上限、等待超时和取消清理；解释汇总为何依赖两个结果，并区分timeout与正常空结果。
 
 - 前置：阶段32的任务状态与失败处理；阶段03函数、04异常与05字典/集合。
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：并发完成不等于依赖齐全
 
-### 1. 并发
+`execute`用Semaphore限制同时活动查询数，再用`asyncio.gather`并发等待知识和工单结果。每个query在进入信号量后递增active，在`finally`里递减；即使被取消，计数也会归还。`wait_for`为每个查询设置0.1秒截止时间，超时变成可识别的`timeout`结果。
 
-定义与用途：多个任务在等待I/O时交替推进；不等于Python计算并行加速。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：gather启动两个查询，peak达到2。
+```python
+knowledge, ticket = await asyncio.gather(
+    bounded("policy-v2", 0.01),
+    bounded("T-7", 0.5 if slow_ticket else 0.02))
+complete = "timeout" not in (knowledge, ticket)
+```
 
-### 2. 依赖
+<details><summary>先预测：工单耗时0.5秒时，是否会生成summary？</summary>
 
-定义与用途：一个步骤所需的前驱结果必须先满足。
+不会，工单结果为timeout，状态partial，summary=None；快路径两个结果齐备才汇总。timeout和正常返回空结果不同，练习要分别表示。
 
-具体例子：summary仅在knowledge和ticket都成功后创建。
+</details>
 
-### 3. 信号量
-
-定义与用途：限制同时进入资源段的协程数量。
-
-具体例子：Semaphore(2)限制活动查询最多两个。
-
-### 4. 超时与取消
-
-定义与用途：wait_for超过期限取消被等待协程，finally负责清理状态。
-
-具体例子：慢工单在0.1秒期限后变timeout，summary为None。
+反例：只等第一个任务成功就摘要会漏掉另一个依赖；不在finally减active会使取消后的并发计数失真。超时取消协程不等于外部服务一定停止处理，真实请求还需幂等与超时语义。
 
 ## 演示与默认命令
 
@@ -111,7 +106,6 @@ def run_case(case):
 5. gather返回值按传入顺序排列，并不按完成顺序排列。
 6. 最后检查结果再生成summary；asyncio.run管理事件循环并在结束时关闭。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -151,7 +145,7 @@ python lessons/33-parallel-dependencies/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“并发”与“依赖”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`timeout`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -171,3 +165,8 @@ python lessons/33-parallel-dependencies/exercises/practice.py
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [LangChain多Agent模式](https://docs.langchain.com/oss/python/langchain/multi-agent)：用来对比路由、主控及交接，本课未依赖框架。
 - [asyncio任务与超时](https://docs.python.org/3.12/library/asyncio-task.html)：gather、wait_for与取消语义。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 33`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

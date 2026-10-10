@@ -17,7 +17,7 @@
 
 从项目根目录执行 `python lessons/17-document-ingestion/exercises/practice.py`。
 
-提交代码、三个输入输出记录（正常、边界、失败），以及为何失败应该被拒绝的说明。
+提交练习代码；命令与案例结果由自动校验保存。说明失败输入应被拒绝的原因仍是理解验收。
 输出不能只是一句完成提示，必须展示你实现的结果。
 
 ## 独立验收
@@ -29,3 +29,15 @@
 
 完成后再运行 `python lessons/17-document-ingestion/solutions/solution.py` 对照设计，不以输出文本完全一致作为唯一标准。
 材料已提供不等于能力已通过；验收必须由你的独立实现和解释支持。
+
+## 自动校验接口
+
+实现`solve(items)`。接口契约：items是(来源, 正文)元组列表；返回chunks和errors。相同正文合并为一个chunk且locations保留各段来源；空正文进入errors，不能中断其他资料。
+
+自动校验只验证这些可重复的代码行为；真实服务、模型质量或设计解释仍按本课原有验收要求处理。校验日志由命令自动保存，无需手工粘贴命令输出。
+
+从项目根目录运行：`.\.venv\Scripts\python.exe tools/check_exercise.py 17`。
+
+### 开放表达与固定契约
+
+返回字典允许附加诊断字段；chunks/errors仍需准确反映去重与失败隔离。

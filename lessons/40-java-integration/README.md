@@ -14,31 +14,26 @@ Python助手调用Java工单业务服务；Java必须自己确认服务身份及
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：跨语言请求先分清身份错误和权限错误
 
-### 1. 服务身份
+authorize_call按顺序验证本地服务token、租户、scope。token错返回401；租户不同或缺scope返回403；都通过才返回ticket id和trace。JSON往返用于确认字符串、数组和对象字段可跨语言交换，不证明真实JWT安全。
 
-定义与用途：证明调用方服务是谁，与用户权限不同。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：X-Service-Token固定本地示例值只供教学。
+```python
+if service_token != "local-teaching-token":
+    return {"status": 401, "error": "invalid_service_token"}
+if claims.get("tenant") != ticket["tenant"]:
+    return {"status": 403, "error": "tenant_mismatch"}
+```
 
-### 2. 用户委派
+<details><summary>先预测：service token正确但scope缺少ticket:read，结果是401还是403？</summary>
 
-定义与用途：服务请求携带用户身份线索，业务服务仍要核验。
+403，身份已识别但权限不足。调用方传来的tenant只有经过认证验证才可信，不能直接作为授权来源。
 
-具体例子：Java通过服务端user目录确定alice所属acme，而非相信任意X-Tenant。
+</details>
 
-### 3. 跨语言契约
-
-定义与用途：双方统一JSON字段、错误对象与状态码，不能依赖Python对象布局。
-
-具体例子：ticket和trace为字符串，状态200/401/403/404明确区分。
-
-### 4. 超时与追踪
-
-定义与用途：请求有限等待并传递关联标识，失败能定位到调用链。
-
-具体例子：Python urlopen(timeout=2)发送X-Trace-Id。
+练习把HTTP状态映射为authentication、authorization、not_found、retryable_read或permanent。429/503对只读请求可重试，不意味着写请求安全。真实Spring Boot与Python客户端集成要测试token传递、超时、错误结构、租户隔离和实际数据库权限。
 
 ## 演示与默认命令
 
@@ -98,7 +93,6 @@ def run_case(case):
 4. integrations Java控制器在服务端固定用户目录核查权限。
 5. Python client分别捕获HTTPError和网络错误，不把所有失败都归为模型回答不好。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -138,7 +132,7 @@ python lessons/40-java-integration/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“服务身份”与“用户委派”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`unauthenticated`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -162,3 +156,8 @@ python lessons/40-java-integration/exercises/practice.py
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [Spring Boot系统要求](https://docs.spring.io/spring-boot/3.5/system-requirements.html)：JDK17与Maven要求。
 - [Spring REST指南](https://spring.io/guides/gs/rest-service)：控制器与JSON响应。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 40`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

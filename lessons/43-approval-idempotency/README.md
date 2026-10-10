@@ -14,31 +14,28 @@
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：先查幂等结果，再决定是否新执行
 
-### 1. 审批绑定
+动作摘要由稳定JSON和SHA-256计算。Ledger.execute先取得写锁，查询key：已存在且摘要相同就返回旧结果并标replayed，不再次检查已消费审批或再写effects；同key不同摘要报冲突。只有没有已保存结果时才检查审批摘要、撤销、期限和动作白名单。
 
-定义与用途：授权针对具体动作及参数，不是对一句模糊意图的永久许可。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：T-7改成T-8触发approval_mismatch。
+```python
+saved = self.db.execute(
+    "SELECT digest,result FROM operations WHERE key=?", (key,)).fetchone()
+if saved:
+    if saved[0] != action_digest:
+        raise ValueError("idempotency_key_conflict")
+    return saved[1], True
+```
 
-### 2. 失效与撤销
+<details><summary>先预测：成功提交后响应丢失，审批随后过期，客户端用同key和同动作重试，会再执行吗？</summary>
 
-定义与用途：新执行前验证有效期与撤销状态，过期或撤销都拒绝。
+不会，只查已提交结果；effects仍为1。若action改成T-8则摘要冲突。审批过期、撤销或内容不匹配时首执行不产生副作用。
 
-具体例子：now等于expires已经失效；revoked不产生effects。
+</details>
 
-### 3. 幂等键
-
-定义与用途：同一逻辑操作重复请求返回同一已保存结果，参数变更必须冲突。
-
-具体例子：operation-7重启后返回closed:T-7且effects仍1。
-
-### 4. 查证与一致性
-
-定义与用途：结果不明先查询业务记录；本地事务保证结果和业务写入一起提交。
-
-具体例子：已提交操作的重放即使审批过期也只查结果，不执行新动作。
+反例：先做外部写入，再保存幂等记录，中途崩溃仍可能重复副作用。本演示将效果和操作记录放同一SQLite事务中；真实远程系统无法共享这个事务，需服务端幂等键、查证接口和恢复流程。
 
 ## 演示与默认命令
 
@@ -66,45 +63,7 @@ revoked {'effects': 0, 'error': 'approval_revoked'}
 
 ## 代码与执行过程
 
-下面摘录示例的核心部分，完整文件见[examples/demo.py](examples/demo.py)。
-
-```python
-"""审批绑定动作摘要；幂等结果和副作用在同一个SQLite事务提交。"""
-import hashlib
-import json
-import sqlite3
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
-def digest(action):
-    # 固定key排序和分隔符，避免JSON空格变化导致同一动作摘要不同。
-    raw = json.dumps(action, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
-
-class Ledger:
-    def __init__(self, path):
-        self.db = sqlite3.connect(path)
-        self.db.executescript("""
-            CREATE TABLE IF NOT EXISTS approvals(id TEXT PRIMARY KEY, digest TEXT, expires REAL, revoked INTEGER);
-            CREATE TABLE IF NOT EXISTS operations(key TEXT PRIMARY KEY, digest TEXT, result TEXT);
-            CREATE TABLE IF NOT EXISTS effects(ticket_id TEXT PRIMARY KEY, state TEXT);
-        """)
-
-    def approve(self, approval_id, action, expires):
-        with self.db:
-            self.db.execute("INSERT INTO approvals VALUES (?, ?, ?, 0)", (approval_id, digest(action), expires))
-
-    def revoke(self, approval_id):
-        with self.db:
-            self.db.execute("UPDATE approvals SET revoked=1 WHERE id=?", (approval_id,))
-
-    def execute(self, key, approval_id, action, now):
-        # 提交前独占写锁，两个连接不能同时认为相同key不存在。
-        self.db.execute("BEGIN IMMEDIATE")
-        try:
-            action_digest = digest(action)
-            saved = self.db.execute("SELECT digest,result FROM operations WHERE key=?", (key,)).fetchone()
-```
+打开[完整示例](examples/demo.py)，重点阅读`Ledger.execute`。这里需要把`try`内的查询、写入和提交，与末尾`except BaseException`里的回滚一起阅读；只看查询开头会遗漏事务最重要的失败路径。先跟踪同一个key第一次执行，再跟踪已提交后的重放。
 
 按执行顺序追踪：
 
@@ -115,7 +74,6 @@ class Ledger:
 5. effects和operations一起提交，异常统一rollback。
 6. 关闭再新建Ledger模拟恢复后重试，没有新增业务效果。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -155,7 +113,7 @@ python lessons/43-approval-idempotency/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“审批绑定”与“失效与撤销”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`revoked`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -175,3 +133,8 @@ python lessons/43-approval-idempotency/exercises/practice.py
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [Python sqlite3](https://docs.python.org/3.12/library/sqlite3.html)：连接、事务与参数化查询。
 - [SQLite事务](https://www.sqlite.org/lang_transaction.html)：IMMEDIATE写事务与锁边界。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 43`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

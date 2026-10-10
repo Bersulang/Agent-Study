@@ -1,68 +1,14 @@
-# 阶段33知识：并行任务与依赖
+# 阶段33复习：并发、取消与依赖门控
 
-## 关联
+关联：[讲义](README.md)、[演示](examples/demo.py)、[练习](exercises/README.md)。
 
-[课程讲义](README.md) · [运行示例](examples/demo.py) · [练习](exercises/README.md)
+Semaphore(2)限制同时活动查询数；gather等待知识和工单两个任务。wait_for超过0.1秒抛TimeoutError，bounded将它标为timeout。query用finally递减active，因此取消也会释放活动计数。只有两个值都不是timeout才生成summary。
 
-## 概念与业务落点
+先预测：ticket超时而knowledge已成功，结果怎样？状态partial、summary为None。正常返回空字符串和超时是不同状态，练习应分别表达。取消协程也不保证外部服务停止副作用；真实网络操作仍需幂等和超时策略。Java可类比CompletableFuture组合与信号量，但取消传播语义需要逐层核对。
 
-### 并发
 
-多个任务在等待I/O时交替推进；不等于Python计算并行加速。
+## 进一步检查
 
-gather启动两个查询，peak达到2。
+`gather`按传入顺序返回两个结果，即使ticket查询实际晚于knowledge完成，变量仍对应原调用位置。Semaphore峰值记录并发上限，不代表总查询数。超时分支返回字符串timeout是教学约定，业务上应使用结构化状态，避免正常答案恰好等于这个字符串。
 
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 依赖
-
-一个步骤所需的前驱结果必须先满足。
-
-summary仅在knowledge和ticket都成功后创建。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 信号量
-
-限制同时进入资源段的协程数量。
-
-Semaphore(2)限制活动查询最多两个。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 超时与取消
-
-wait_for超过期限取消被等待协程，finally负责清理状态。
-
-慢工单在0.1秒期限后变timeout，summary为None。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-## 状态与失败路径
-
-- async def定义协程函数，调用它得到待执行对象。
-- async with获取并最终释放信号量。
-- nonlocal让内层query修改外层active与peak。
-- wait_for包住每个查询，各自拥有0.1秒期限。
-- gather返回值按传入顺序排列，并不按完成顺序排列。
-- 最后检查结果再生成summary；asyncio.run管理事件循环并在结束时关闭。
-
-## 易错解释
-
-- 在async函数内用time.sleep：会阻塞整个事件循环。
-- 认为wait_for能终止任意线程或远程写入：取消只对可协作取消对象有效。
-- 一个查询超时却编造综合结论：应显式部分成功。
-
-## Java对照
-
-类似Java CompletableFuture并发I/O加Semaphore；Python协程通常在单线程事件循环推进，CPU密集任务仍需线程/进程或外部服务。
-
-## 独立迁移
-
-实现汇总门控：任一结果缺失时返回blocked及缺失名称；两者存在才生成summary；补充区别超时和正常空结果。
-
-## 工程限制
-
-生产需端到端deadline传播、连接池限制与取消协议；延迟应记录实际分布，避免只有平均值。
-
-默认行为是教学机制，不等于模型质量证明或生产系统认证。验收必须由学员独立完成并提供证据。
+若查询一正常返回空值，依赖是否满足由业务契约决定；它不能自动等同timeout。取消会经wait_for向内部协程传播，finally会执行，但远端HTTP服务器可能已接到请求。Java CompletableFuture也需区分取消本地future与撤销服务端处理。

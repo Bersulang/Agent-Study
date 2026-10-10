@@ -8,37 +8,31 @@
 
 ## 学习目标与前置
 
-能解释交接与工具调用的区别，保留必要事实并阻止循环转交。
+能指出owner何时改变、循环/跳数限制何时阻止交接；按接收者白名单传递最少必要事实，并区分澄清与权限拒绝。
 
 - 前置：阶段31的任务状态与失败处理；阶段03函数、04异常与05字典/集合。
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：交接改变控制权，也缩小信息
 
-### 1. 控制权
+`handoff`不是把整段对话转发给另一个角色。它只从facts中取白名单字段ticket_id；private_note不会进入接收者上下文。然后先检查target是否已出现在history里，避免循环，再检查hop预算，最后验证接收者和必要事实。
 
-定义与用途：谁负责下一轮用户交互和后续行动选择。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：owner从reception变ticket；普通函数调用返回后owner通常不变。
+```python
+selected = {key: facts[key] for key in ("ticket_id",) if key in facts}
+if target in history:
+    return {"owner": owner, "facts": selected, "status": "loop_blocked"}
+```
 
-### 2. 交接上下文
+<details><summary>先预测：history里已有ticket，再把任务交给ticket，会改变owner吗？</summary>
 
-定义与用途：接收者完成职责所需的最小事实集合。
+不会，返回loop_blocked并保留当前owner。若ticket_id缺失，则契约错误；扩展练习为reader缺question时返回needs_clarification。
 
-具体例子：保留ticket_id，过滤private_note。
+</details>
 
-### 3. 交接条件
-
-定义与用途：接收者能力和必需事实满足时才能改变owner。
-
-具体例子：缺失ticket_id抛ValueError，不产生半完成交接。
-
-### 4. 防环与跳数
-
-定义与用途：历史角色检测重复目标，同时限制最长转交链。
-
-具体例子：ticket已经出现在history时返回loop_blocked；跳数到上限返回hop_limit。
+反例：直接传入整个facts会把private_note泄给不需要它的角色；只限制最大跳数而不查循环，也会浪费调用预算。真实handoff还需带可信身份、任务状态和审批上下文，不能让接收者因收到文字就取得写权限。
 
 ## 演示与默认命令
 
@@ -98,7 +92,6 @@ def run_case(case):
 4. 目标和必要字段校验通过后，才返回transferred。
 5. run_case证明三种路径都不会带出private_note。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -138,7 +131,7 @@ python lessons/32-handoff/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“控制权”与“交接上下文”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`limit`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -157,3 +150,8 @@ python lessons/32-handoff/exercises/practice.py
 
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [LangChain多Agent模式](https://docs.langchain.com/oss/python/langchain/multi-agent)：用来对比路由、主控及交接，本课未依赖框架。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 32`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

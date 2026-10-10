@@ -17,7 +17,7 @@
 
 从项目根目录执行 `python lessons/29-mcp-remote/exercises/practice.py`。
 
-提交代码、三个输入输出记录（正常、边界、失败），以及为何失败应该被拒绝的说明。
+提交练习代码；命令与案例结果由自动校验保存。说明失败输入应被拒绝的原因仍是理解验收。
 输出不能只是一句完成提示，必须展示你实现的结果。
 
 ## 独立验收
@@ -29,3 +29,11 @@
 
 完成后再运行 `python lessons/29-mcp-remote/solutions/solution.py` 对照设计，不以输出文本完全一致作为唯一标准。
 材料已提供不等于能力已通过；验收必须由你的独立实现和解释支持。
+
+## 自动校验接口
+
+实现`solve(required, discovered) 与 call_read(operation, attempts=2)`。接口契约：required/discovered为工具名到Schema版本映射；solve拒绝缺失或版本不兼容工具。call_read只对ConnectionError有限重试，认证/权限错误不重试；不能用于写请求。
+
+自动校验只验证这些可重复的代码行为；真实服务、模型质量或设计解释仍按本课原有验收要求处理。校验日志由命令自动保存，无需手工粘贴命令输出。
+
+从项目根目录运行：`.\.venv\Scripts\python.exe tools/check_exercise.py 29`。

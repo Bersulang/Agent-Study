@@ -1,52 +1,9 @@
-# 阶段28知识卡：本地MCP接入
+# 阶段28复习：把本地工具契约映射到MCP概念
 
-关联：[讲义](README.md)、[演示](examples/demo.py)、[练习](exercises/README.md)。
+关联：[讲义](README.md)、[dispatch演示](examples/demo.py)、[练习契约](exercises/README.md)。
 
-## Host与Client与Server
+演示先查看method：`tools/list`返回get_ticket说明；`tools/call`再解析`params.name`与arguments中的ticket_id。未知method、未知工具和空ticket_id是不同失败点，练习将它们转换为不同错误码，且不暴露异常堆栈。
 
-- 定义：宿主管理交互，客户端维持会话，服务器提供能力。
-- 场景例子：宿主中的客户端连接工单服务。
-- 判断方法：观察输入、输出和失败分支，不能只看是否打印成功。
-- 复习问题：去掉这一机制会导致什么错误？
-- 演示关联：examples/demo.py的核心处理函数与tests/test_behavior.py。
+Tool是可调用操作，Resource是供读取的数据，Prompt是可复用消息模板；它们有不同输入输出契约。工具列表中声明required参数也不代替运行时校验。服务端仍要验证调用者身份和工单访问权。
 
-## Tools
-
-- 定义：可被调用的带参数操作。
-- 场景例子：get_ticket(ticket_id)。
-- 判断方法：观察输入、输出和失败分支，不能只看是否打印成功。
-- 复习问题：去掉这一机制会导致什么错误？
-- 演示关联：examples/demo.py的核心处理函数与tests/test_behavior.py。
-
-## Resources与Prompts
-
-- 定义：资源提供数据，提示提供可复用消息模板。
-- 场景例子：policy://current与summarize_ticket。
-- 判断方法：观察输入、输出和失败分支，不能只看是否打印成功。
-- 复习问题：去掉这一机制会导致什么错误？
-- 演示关联：examples/demo.py的核心处理函数与tests/test_behavior.py。
-
-## stdio生命周期
-
-- 定义：子进程通过标准输入输出交换协议消息。
-- 场景例子：stdout不能混入调试日志。
-- 判断方法：观察输入、输出和失败分支，不能只看是否打印成功。
-- 复习问题：去掉这一机制会导致什么错误？
-- 演示关联：examples/demo.py的核心处理函数与tests/test_behavior.py。
-
-## 实现与真实系统的差别
-
-默认dispatch不是完整MCP也不是JSON-RPC实现。integrations使用官方Python SDK启动真实stdio子进程与会话。
-
-## 调试方法
-
-1. 缩小到一个输入，写出预期结果。
-2. 跟踪本课trace或状态字段。
-3. 检查错误发生在输入、控制还是输出边界。
-4. 补失败案例并复跑测试。
-
-## 验收关联
-
-练习要求：为工具调用添加请求级错误结果：未知方法、未知工具与非法参数应区分错误码；不能把异常堆栈作为正文返回。用真实SDK客户端完成发现、资源读取和提示获取。
-
-能定义、修改、排错和验证才构成掌握，课程交付不是学员通过。
+先预测：将method设成`tools/call`但name写错，会回什么？拒绝未知工具，不会返回“工单不存在”。本demo只模拟dispatch字典，不实现MCP初始化、JSON-RPC传输或stdio生命周期。真实SDK需要连接与能力协商；stdio中stdout只能承载协议消息，调试输出写stderr。

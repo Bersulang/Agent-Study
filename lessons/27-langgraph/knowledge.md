@@ -1,52 +1,11 @@
-# 阶段27知识卡：LangGraph状态与中断
+# 阶段27复习：暂停状态与恢复绑定
 
-关联：[讲义](README.md)、[演示](examples/demo.py)、[练习](exercises/README.md)。
+关联：[讲义](README.md)、[演示](examples/demo.py)、[练习契约](exercises/README.md)。
 
-## 状态
+此demo用纯函数模拟状态图一步。draft进入waiting；waiting加上None仍waiting，表示还没有审核决定；只有布尔值才推进。False进入rejected，True进入done；完成态不会再次推进。
 
-- 定义：节点间传递的业务数据。
-- 场景例子：任务号与approved布尔值。
-- 判断方法：观察输入、输出和失败分支，不能只看是否打印成功。
-- 复习问题：去掉这一机制会导致什么错误？
-- 演示关联：examples/demo.py的核心处理函数与tests/test_behavior.py。
+`dict(state)`创建外层副本，所以示例返回新字典而不改调用者传入的state。它是浅复制，嵌套列表仍可能共享。先预测：传入`decision="yes"`会默认批准吗？不会，抛ValueError。
 
-## 节点与边
+练习的批准必须同时绑定task和digest。即使审批为True，来自T1的digest也不能恢复T2；过期或不匹配的记录拒绝继续。框架节点可能在恢复、重试时重跑，因此外部写入要有幂等保护；此纯函数没有真的调用LangGraph checkpoint。
 
-- 定义：节点计算状态变化，边选择下一步。
-- 场景例子：draft后进入review。
-- 判断方法：观察输入、输出和失败分支，不能只看是否打印成功。
-- 复习问题：去掉这一机制会导致什么错误？
-- 演示关联：examples/demo.py的核心处理函数与tests/test_behavior.py。
-
-## 检查点
-
-- 定义：按线程保存执行状态。
-- 场景例子：thread_id=case-1。
-- 判断方法：观察输入、输出和失败分支，不能只看是否打印成功。
-- 复习问题：去掉这一机制会导致什么错误？
-- 演示关联：examples/demo.py的核心处理函数与tests/test_behavior.py。
-
-## 中断与恢复
-
-- 定义：暂停节点等待外部决定，再继续执行。
-- 场景例子：拒绝时进入rejected而非执行付款。
-- 判断方法：观察输入、输出和失败分支，不能只看是否打印成功。
-- 复习问题：去掉这一机制会导致什么错误？
-- 演示关联：examples/demo.py的核心处理函数与tests/test_behavior.py。
-
-## 实现与真实系统的差别
-
-默认手写状态机不是LangGraph。真实SDK图、中断与InMemorySaver位于integrations；内存Saver不提供跨进程持久恢复。
-
-## 调试方法
-
-1. 缩小到一个输入，写出预期结果。
-2. 跟踪本课trace或状态字段。
-3. 检查错误发生在输入、控制还是输出边界。
-4. 补失败案例并复跑测试。
-
-## 验收关联
-
-练习要求：增加审批动作摘要，在恢复时检查task与摘要一致；过期审批不能恢复另一个任务。然后对照真实LangGraph集成说明节点重跑的副作用风险。
-
-能定义、修改、排错和验证才构成掌握，课程交付不是学员通过。
+Java可以用枚举表达stage、不可变状态对象表达节点输入输出，并用持久化checkpoint恢复。真实集成还要验证checkpoint存储、身份可信度和副作用发生次数。完成[练习](exercises/README.md)时列出每条状态转移的前提。

@@ -8,37 +8,34 @@
 
 ## 学习目标与前置
 
-能定义允许字段、校验补丁、拒绝陈旧版本并保持更新原子性。
+能解释乐观版本检查与原子补丁校验，证明非法补丁不部分修改共享状态，并说明批量补丁只递增一次版本。
 
 - 前置：阶段33的任务状态与失败处理；阶段03函数、04异常与05字典/集合。
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：先校验补丁，再推进版本
 
-### 1. 任务契约
+`merge`先比较expected_version和当前version，再检查补丁字段必须恰好为status且值只能ready/blocked。所有检查通过后才修改state，并把version加一。旧版本得到version_conflict；多带private_reason得到invalid_patch。
 
-定义与用途：明确输入、输出、证据和错误格式，使接收者不解析自由文本猜状态。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：patch只允许status，非法private_reason被拒绝。
+```python
+if expected_version != state["version"]:
+    raise ValueError("version_conflict")
+if set(patch) != {"status"} or patch["status"] not in {"ready", "blocked"}:
+    raise ValueError("invalid_patch")
+state.update(patch)
+state["version"] += 1
+```
 
-### 2. 共享与私有状态
+<details><summary>先预测：补丁先包含合法status、后带非法字段时，状态会不会部分更新？</summary>
 
-定义与用途：共享事实经受控合并，角色内部草稿不直接进入公共状态。
+不会，因为整份patch在update前检查。练习扩展到多份补丁：任何一项非法都要让状态与版本保持完全不变，全部合法时version只加一次。
 
-具体例子：state只含version和status，私人理由不能写入。
+</details>
 
-### 3. 乐观并发
-
-定义与用途：提交者携带读到的版本，只有版本仍一致才允许更新。
-
-具体例子：第一次以version=1写入后，第二次仍用1触发version_conflict。
-
-### 4. 原子校验
-
-定义与用途：先验证整个请求，再做任何状态变化。
-
-具体例子：包含合法status和非法字段的补丁失败后version仍1。
+反例：逐条写入后再验证尾部字段，会留下半更新状态。Java里可用事务或乐观锁版本列做相似保护；此Python对象没有数据库并发控制。
 
 ## 演示与默认命令
 
@@ -101,7 +98,6 @@ def run_case(case):
 4. 两个校验都通过之后才update并自增版本。
 5. 返回dict(state)防止接收者拿到内部字典引用。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -141,7 +137,7 @@ python lessons/34-contracts-state/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“任务契约”与“共享与私有状态”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`invalid`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -160,3 +156,8 @@ python lessons/34-contracts-state/exercises/practice.py
 
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [LangChain多Agent模式](https://docs.langchain.com/oss/python/langchain/multi-agent)：用来对比路由、主控及交接，本课未依赖框架。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 34`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

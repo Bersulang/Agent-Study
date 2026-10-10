@@ -24,3 +24,11 @@ assert new != old and task["version"] == old
 api["rollback"](registry, old)
 assert registry["active"] == old
 print("旧任务未漂移；安全回滚成功；CI示例见solutions/course-checks.yml")
+
+def solve(data):
+    """只有有效候选版本通过质量门槛后才切换别名。"""
+    candidate = data["candidate"]
+    released = bool(candidate["valid"] and candidate["quality"] >= 0.9)
+    active = candidate["version"] if released else data["active_version"]
+    return {"active_version": active, "released": released,
+            "task_version": data.get("task_version", active)}

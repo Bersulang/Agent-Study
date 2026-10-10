@@ -14,31 +14,26 @@ API先记录任务，Worker稍后领取；一个Worker暂停太久后另一个�
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：租约过期后用token隔离旧Worker
 
-### 1. API与Worker分离
+`enqueue`以job id主键去重。`claim`用`BEGIN IMMEDIATE`把读取当前状态和写入lease放进一个写事务；未过期任务不能被第二个Worker拿走。租约过期可接管，token递增。`complete`同时检查owner、token、状态和expires，并把done与effects放在同一事务。
 
-定义与用途：入口持久接收请求，工作者独立执行耗时任务。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：api与worker使用两个真实SQLite连接。
+```python
+updated = self.db.execute(
+    "UPDATE jobs SET state='done' WHERE id=? AND owner=? AND token=? "
+    "AND state='leased' AND expires>?",
+    (job_id, owner, token, now))
+```
 
-### 2. 至少一次投递
+<details><summary>先预测：worker-a持token1停顿，worker-b到期后领取token2；a再提交会怎样？</summary>
 
-定义与用途：消息可能重复抵达，处理端必须识别逻辑重复。
+WHERE匹配不到，stale_accepted=False；b提交后effects只为1。未到期时第二次claim返回None。
 
-具体例子：jobs主键使两次enqueue同一T-7仍只有一条任务。
+</details>
 
-### 3. 租约
-
-定义与用途：一段有限时间内任务归某个Worker处理，过期后可重新领取。
-
-具体例子：worker-a到110过期，worker-b在111接手。
-
-### 4. Fencing token
-
-定义与用途：每次领取递增编号，业务提交只接受当前编号。
-
-具体例子：token1的旧worker提交失败，token2成功且effects为1。
+反例：先SELECT、离开事务后再UPDATE会让两个Worker都以为自己拿到工作；只有租约没有fencing token，旧Worker恢复后仍可能覆盖新结果。Python取消/超时也不能撤回已发出的外部HTTP副作用，外部系统还需幂等键。
 
 ## 演示与默认命令
 
@@ -114,7 +109,6 @@ class Queue:
 5. complete条件同时验证owner、token、state和有效期。
 6. effects与done在同一事务写入；两个连接finally显式关闭。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -154,7 +148,7 @@ python lessons/42-workers-queues/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“API与Worker分离”与“至少一次投递”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`busy`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -174,3 +168,8 @@ python lessons/42-workers-queues/exercises/practice.py
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [Python sqlite3](https://docs.python.org/3.12/library/sqlite3.html)：连接、事务与参数化查询。
 - [SQLite事务](https://www.sqlite.org/lang_transaction.html)：IMMEDIATE写事务与锁边界。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 42`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

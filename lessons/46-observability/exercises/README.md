@@ -6,10 +6,18 @@
 
 ## 提交
 
-提交 practice.py、至少一个成功和两个失败案例的结果、设计原因。
+提交练习代码；自动校验命令会保存运行结果。设计原因可在验收对话中说明。
 
 ## 验收
 
 解释指标、日志、轨迹差别；演示嵌套密钥脱敏和失败Span；说明假设价格不是实际账单。
 
 完成后查看 [参考答案](../solutions/solution.py)，不要预先复制。
+
+## 自动校验接口
+
+实现`solve(data)`，契约如下：必填`request_id`、`input_tokens`和`output_tokens`；`error`可选，若提供则可含`type`和敏感`body`。两个token计数必须是非负整数，否则抛`ValueError`。返回`request_id`、`error_type`（没有错误类型时为`None`）和`cost`；成本按输入每百万token 1个假设单位、输出每百万token 2个假设单位计算。错误正文不得出现在结果中。
+
+自动校验只验证上述可重复的行为子集；涉及真实模型、服务、身份、部署或需要设计解释的部分，仍按本课集成任务独立验收。校验日志由统一命令自动保存，不要求手工粘贴命令输出。
+
+从项目根目录运行：`.\.venv\Scripts\python.exe tools/check_exercise.py 46`。

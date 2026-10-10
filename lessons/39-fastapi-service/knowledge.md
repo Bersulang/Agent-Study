@@ -1,67 +1,14 @@
-# 阶段39知识：FastAPI服务与事件接口
+# 阶段39复习：任务API与事件续读
 
-## 关联
+关联：[讲义](README.md)、[领域演示](examples/demo.py)、[练习](exercises/README.md)、[FastAPI集成](integrations/README.md)。
 
-[课程讲义](README.md) · [运行示例](examples/demo.py) · [练习](exercises/README.md)
+create先验证session/prompt，验证失败时tasks保持0；成功后创建running任务和progress事件。advance只接受running并追加text/final；cancel把任务转canceled，之后不能再追加final。`read`复制events列表，防止调用方篡改内部状态。
 
-## 概念与业务落点
+SSE续读参数after应解释为已收到的最后序号，只返回其后的事件；负数拒绝、session不符403。离线领域机制和真实HTTP/事件流是不同关卡，不能由材料或统一验证器代替学员验收。
 
-### 请求校验
 
-在入口验证类型、字段与范围，失败不创建任务。
+## 进一步检查
 
-空prompt返回422，领域层任务数不增加。
+当前demo只提供TaskService领域对象。真实API需把请求体校验映射为HTTP错误，将session身份从可信认证上下文取得，并为事件分配稳定递增序号。`after`是客户端确认已收到的最后序号，续读应严格筛选更大序号；重复返回已读事件会造成重复显示，跳号则会丢事件。
 
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 会话与任务
-
-会话组织多轮对话，任务表示一次有限执行，不应混用id。
-
-create接收session_id并生成task-1。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 事件流
-
-progress描述进度、text描述增量内容、final表示正式完成。
-
-StreamingResponse发送SSE，支持after序号续读。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 取消
-
-把任务状态转为canceled，后续advance不得追加final。
-
-cancel案例事件只有progress和canceled。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-## 状态与失败路径
-
-- TaskService是领域层，默认程序不需要第三方依赖。
-- create验证后才生成id并写tasks。
-- advance仅处理running任务，因此取消后不生成最终结果。
-- read返回events拷贝，调用者不能通过列表引用篡改事件。
-- integrations app用路由装饰器注册接口，TestClient在进程内真实调用ASGI应用。
-
-## 易错解释
-
-- 把text当最终结果触发业务写入：要等待明确final。
-- 每次重连创建新任务：会重复执行，应复用task id与事件序号。
-- BackgroundTasks当可靠队列：进程退出会丢任务。
-
-## Java对照
-
-FastAPI路径装饰器类似Spring的@RequestMapping，Pydantic类似Bean Validation；Python注解由框架读取校验，普通函数注解不会自动校验。
-
-## 独立迁移
-
-实现会话隔离和事件续读：session不匹配拒绝；after为已收到序号，只返回后续事件；负序号拒绝。
-
-## 工程限制
-
-集成页面仅供本地教学；生产还需要真实用户身份、持久事件日志、背压、代理缓冲设置与Worker队列。
-
-默认行为是教学机制，不等于模型质量证明或生产系统认证。验收必须由学员独立完成并提供证据。
+取消只能在任务仍running时成功。若服务端和Worker分离，取消还要传播到队列并定义已提交副作用的边界。实际FastAPI/TestClient/SSE验证记录在integrations；离线`TaskService`通过并不等于HTTP集成已通过。

@@ -1,11 +1,10 @@
-"""阶段 53 独立练习，要求见同目录 README.md。"""
+"""阶段练习骨架；自动检查代码子集的接口见exercises/README.md。"""
 
-# 请先用自己的话描述输入、输出和失败条件，再实现需求。
-# 不要直接复制参考答案；已有案例可以作为设计与语法参考。
-def solve():
-    """完成本阶段的新需求；由你决定必要的参数和数据结构。"""
-    raise NotImplementedError("请按练习要求实现，并增加验证案例")
+def solve(data=None):
+    """实现本课可自动验证的独立代码子集；无参调用保留旧练习入口。"""
+    if data is None:
+        raise NotImplementedError("旧练习入口尚未完成；请先实现solve(data)")
+    raise NotImplementedError("请按练习要求实现solve(data)")
 
 if __name__ == "__main__":
-    # 骨架可直接运行，提示未完成；完成后改为调用并验证你的实现。
-    print("练习尚未完成：阅读 exercises/README.md 后实现 solve")
+    print("练习尚未完成：阅读exercises/README.md后实现solve(data)")

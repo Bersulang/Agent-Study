@@ -1,67 +1,14 @@
-# 阶段41知识：持久化、事务与恢复
+# 阶段41复习：事务提交与新连接恢复
 
-## 关联
+关联：[讲义](README.md)、[SQLite示例](examples/demo.py)、[练习](exercises/README.md)。
 
-[课程讲义](README.md) · [运行示例](examples/demo.py) · [练习](exercises/README.md)
+save使用expected_version做乐观更新。rowcount不为1时报version_conflict；成功更新和audit插入在同一连接事务内。模拟提交前崩溃会使两者一起回滚。关闭连接后用新Store读取，确认状态来自磁盘。
 
-## 概念与业务落点
+连接上下文负责commit/rollback，不负责关闭连接，需finally/close。CREATE TABLE IF NOT EXISTS不是迁移工具；生产还要迁移版本、保留策略、备份和并发验证。
 
-### 检查点
 
-恢复任务必需的状态快照，不等于保存所有聊天文本。
+## 进一步检查
 
-tasks保存state和version，重建连接读取ready。
+冲突案例中第一次save将version 0改为1；第二次仍提交expected_version 0，因此更新行数为0并回滚，状态保留ready/version1。异常案例在audit插入前发生，状态更新也一起撤销。最终新连接读取避免误把Python对象缓存当磁盘恢复。
 
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 事务
-
-一组写入全部成功提交或全部失败回滚。
-
-状态更新和audit插入在同一个with self.db中。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 审计
-
-记录谁在何时做了什么，业务事实变化应有关联事件。
-
-演示audit记录checkpoint_saved，生产还要actor与tenant。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-### 迁移与保留
-
-数据库结构升级和过期数据清理需独立策略。
-
-CREATE IF NOT EXISTS只负责初始建表，不自动迁移已有列。
-
-阅读示例时找到实现此约定的条件或状态转换，再描述删除它会造成的错误。
-
-## 状态与失败路径
-
-- Store初始化创建两张表，PRIMARY KEY拒绝重复task id。
-- save的UPDATE携带expected_version，只更新符合版本的一行。
-- rowcount不等1就抛冲突，事务自动回滚。
-- crash发生在审计前，with负责把状态更新一起回滚。
-- close关闭连接，重新Store连接同一路径证明真实磁盘恢复。
-
-## 易错解释
-
-- with connection自动关闭连接：它管理事务，close仍需要调用。
-- 先提交状态再写审计：后一步失败会丢失关联。
-- 把所有提示词和工具结果无限保留：需数据用途与期限。
-
-## Java对照
-
-类似Java JDBC事务或@Transactional；SQLite单文件适合本地验证，连接跨线程使用及并发写吞吐需单独考虑。
-
-## 独立迁移
-
-读取所有new与ready任务的id/state/version，排除completed；使用参数化SQL；关闭后重新连接应读取同样结果。
-
-## 工程限制
-
-企业生产通常需要迁移脚本、备份恢复、租户索引、加密、保留策略；本课不声称SQLite教具可替代分布式数据库。
-
-默认行为是教学机制，不等于模型质量证明或生产系统认证。验收必须由学员独立完成并提供证据。
+参数化SQL中的问号和tuple值分离代码与数据，避免把task_id拼接进查询。示例没有数据库迁移脚本、并发压测或备份恢复；CREATE TABLE IF NOT EXISTS仅初始化表结构，不保证已有生产表自动升级。

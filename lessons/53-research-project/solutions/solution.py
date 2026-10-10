@@ -15,3 +15,15 @@ try:
     api["research"](["missing-source"])
 except ValueError:
     print("缺失来源不能充当证据")
+
+def solve(data):
+    """过滤过期事实，要求来源并按来源标识稳定去重。"""
+    facts, seen = [], set()
+    for row in data["facts"]:
+        if not row.get("active", False): continue
+        source = row.get("source")
+        if not isinstance(source, str) or not source.strip(): raise ValueError("事实缺少来源")
+        if source in seen: continue
+        seen.add(source)
+        facts.append({"text": row["text"], "source": source})
+    return {"facts": facts}

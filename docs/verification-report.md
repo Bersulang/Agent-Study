@@ -1,8 +1,47 @@
 # 全课程验证报告
 
+## 2026-10-08 全项目讲义可读性复核
+
+调整01—56讲义与02—56复习页，重写阶段02；按具体问题、执行过程、预测与反例组织讲解，同步教学规范、知识索引和进度记录。独立复核各课概念与演示顺序，修正阶段21检索结果说明和阶段25恢复边界说明；代码摘录明确标注所需上下文。
+
+在项目根目录执行：
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE = '1'
+.\.venv\Scripts\python.exe -B tools/verify_course.py
+```
+
+最终结果PASS：56阶段、280个Python文件、226份Markdown、219条命令、200项标准库测试。包括源码语法、本地链接与课程结构检查、默认示例和测试运行。另独立执行阶段02讲义/复习页17个完整Python片段，以及03—06新增7个基础片段，输出与讲解一致；不能独立执行的函数内部摘录没有当作完整脚本测试。修改后的讲义、复习页及根文档通过`git diff --check`，代码围栏与折叠标签配对检查通过。
+
+这次验证未调用真实模型、Java服务或Docker，也不代表学员能力通过。学员01作业和既有通过记录保留；课程仍按原有能力验收推进。本轮禁用字节码缓存，生成的`artifacts/verification-report.json`在保存本文结论后删除；保留学员自动检查日志。
+
+
+## 2026-10-08 其他阶段开放题校验复核
+
+复核02—56阶段检查规则，修正02/17/18/35/41/53对附加字段的限制、13回答关键词误判与23证据包装/标识限制。协议枚举、业务排序及安全边界仍保留。执行`python -B -m unittest tests.test_open_exercise_contracts tests.test_exercise_checks tests.test_exercise_runner tests.test_exercise_reference_compatibility -q`，28项通过，包括临时副本中的56阶段参考兼容验证、不同表达及失败反例；全课程静态检查通过（56阶段、280个Python文件、226份Markdown）。未运行真实服务或模型，也未写入学员通过记录。临时副本自动清理，静态检查生成的机器报告在收尾删除。
+
+## 2026-10-08 阶段01开放表达修复
+
+移除输出必须包含“用途/能力/下一步”等词的误判规则；仅匹配明确的模板占位，不再因合法名称包含Todo而拒绝。新增自然表达及六类独立错误反例回归。执行`python -B -m unittest tests.test_exercise_checks tests.test_exercise_runner tests.test_exercise_reference_compatibility -q`，23项测试通过。随后对学员原始启动卡片执行`python -B tools/check_exercise.py 01`，三项通过并自动记录；未修改学员作业，未标记整课能力通过。本轮禁用字节码缓存，临时测试目录自动清理；保留学员检查结果供后续使用。
+
 验证日期：2026-10-06。环境：Windows PowerShell、Python 3.12.10。
 
 ## 本轮材料复核：2026-10-07
+
+### 练习自动校验交付复核
+
+收尾整理复核：学习状态路径调整为`.local/exercise-progress.json`，按需生成；运行`python -m unittest tests.test_exercise_runner -q`的11项测试通过，`python tools/verify_course.py --static-only`通过。验证结论保留在本文，生成的机器报告已清理。随后按明确路径清单删除113个Python缓存文件及94个空缓存目录，确认lessons、tools、tests下缓存目录剩余0个，并移除空的artifacts目录。
+
+新增01—56课的171项练习行为检查及自动进度记录。执行以下命令，21个维护测试全部通过；其中参考兼容测试在临时副本中逐课检查56份参考实现，不修改学员练习或记录学员通过。
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest tests.test_exercise_runner tests.test_exercise_checks tests.test_exercise_reference_compatibility -q
+.\.venv\Scripts\python.exe tools/verify_course.py
+```
+
+本次全课程验证通过：56阶段、279个Python文件、226份Markdown、219条命令、193个标准库测试方法。另通过`run_checks`逐课检查实际56份未完成骨架，全部未通过，符合预期；检查未写入学习进度，`.local/exercise-progress.json`仍无学员记录。自动检查包含超时、异步失败、错误覆盖旧通过、代码变更待重验和禁用优化跳过断言的回归验证。后期课程的检查仅覆盖各练习说明列出的离线接口，不代表真实部署、集成或能力验收通过。
+
+### 前次路线优化复核
 
 从项目根目录执行`.\.venv\Scripts\python.exe tools/verify_course.py`，结果通过：56阶段、270个Python文件、225份Markdown、219条命令、172个标准库测试方法。该验证包含本轮课程材料静态检查及默认演示/练习/答案运行；通过只证明材料和机制测试可执行，不证明学员能力或外部服务集成。
 

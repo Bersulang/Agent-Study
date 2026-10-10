@@ -28,3 +28,12 @@ for values in [(-1, 1, 1, 1), (1, 1, -1, 1)]:
     else:
         raise AssertionError("负数不能计价")
 print("假设成本：", api["estimate_cost"](1000, 200, 1, 2))
+
+def solve(data):
+    """生成脱敏的请求摘要并计算非负用量成本。"""
+    input_tokens, output_tokens = data["input_tokens"], data["output_tokens"]
+    if type(input_tokens) is not int or type(output_tokens) is not int or min(input_tokens, output_tokens) < 0:
+        raise ValueError("token数量必须是非负整数")
+    error = data.get("error") or {}
+    return {"request_id": data["request_id"], "error_type": error.get("type"),
+            "cost": input_tokens / 1_000_000 + output_tokens * 2 / 1_000_000}

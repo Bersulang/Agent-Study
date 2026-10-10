@@ -14,4 +14,16 @@ def solve(required, discovered):
             raise demo.RemoteError("工具Schema版本不兼容：" + name)
     return {"compatible": True, "tools": sorted(required)}
 
+
+def call_read(operation, attempts=2):
+    """只对只读断连有限重试；认证等其他错误原样传播。"""
+    if type(attempts) is not int or attempts < 1:
+        raise ValueError("尝试次数至少为1")
+    for attempt in range(attempts):
+        try:
+            return operation()
+        except ConnectionError:
+            if attempt + 1 == attempts:
+                raise demo.RemoteError("重连预算耗尽")
+
 print(solve({"get_ticket": "1"}, {"get_ticket": "1"}))

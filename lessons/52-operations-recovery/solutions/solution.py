@@ -31,3 +31,16 @@ with TemporaryDirectory() as folder:
     except FileNotFoundError:
         print("缺失源数据库不会静默创建空备份")
 print("候选不会自动发布：", api["candidates"]([{"category": "failure", "case_id": "c2"}]))
+
+def solve(data):
+    """仅恢复有效备份，并在报告中保留反馈来源而隐藏正文。"""
+    if not data["backup_valid"]:
+        return {"restored": False, "task_count": 0, "states": {}, "feedback": []}
+    states = {}
+    for task in data["tasks"]:
+        states[task["state"]] = states.get(task["state"], 0) + 1
+    unique = {}
+    for row in data.get("feedback", []):
+        unique.setdefault(row["id"], {"id": row["id"], "source": row["source"]})
+    return {"restored": True, "task_count": len(data["tasks"]),
+            "states": states, "feedback": list(unique.values())}

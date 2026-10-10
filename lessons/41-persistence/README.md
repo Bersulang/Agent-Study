@@ -14,31 +14,27 @@
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：状态更新与审计必须同一事务提交
 
-### 1. 检查点
+`save`用`WHERE id=? AND version=?`做乐观并发更新。只有rowcount为1才继续；状态、version递增和audit插入处在同一个`with self.db`事务中。版本冲突或模拟崩溃抛错，连接上下文回滚所有写入。
 
-定义与用途：恢复任务必需的状态快照，不等于保存所有聊天文本。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：tasks保存state和version，重建连接读取ready。
+```python
+updated = self.db.execute(
+    "UPDATE tasks SET state=?, version=version+1 WHERE id=? AND version=?",
+    (state, task_id, expected_version))
+if updated.rowcount != 1:
+    raise ValueError("version_conflict")
+```
 
-### 2. 事务
+<details><summary>先预测：状态UPDATE之后、audit之前发生异常，磁盘中是否留下ready和半条审计？</summary>
 
-定义与用途：一组写入全部成功提交或全部失败回滚。
+不会，事务整体回滚为new/version0/audit0。关闭连接后新建Store读取，是在验证文件，不是复用内存对象。
 
-具体例子：状态更新和audit插入在同一个with self.db中。
+</details>
 
-### 3. 审计
-
-定义与用途：记录谁在何时做了什么，业务事实变化应有关联事件。
-
-具体例子：演示audit记录checkpoint_saved，生产还要actor与tenant。
-
-### 4. 迁移与保留
-
-定义与用途：数据库结构升级和过期数据清理需独立策略。
-
-具体例子：CREATE IF NOT EXISTS只负责初始建表，不自动迁移已有列。
+反例：只更新业务行、在事务外写审计会出现状态成功但无审计，或审计声称成功但状态回滚。`with connection`管理事务而不自动关闭连接，必须显式close。生产还需迁移方案、租户字段、备份恢复与并发压测。
 
 ## 演示与默认命令
 
@@ -113,7 +109,6 @@ class Store:
 4. crash发生在审计前，with负责把状态更新一起回滚。
 5. close关闭连接，重新Store连接同一路径证明真实磁盘恢复。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -153,7 +148,7 @@ python lessons/41-persistence/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“检查点”与“事务”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`conflict`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -173,3 +168,8 @@ python lessons/41-persistence/exercises/practice.py
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [Python sqlite3](https://docs.python.org/3.12/library/sqlite3.html)：连接、事务与参数化查询。
 - [SQLite事务](https://www.sqlite.org/lang_transaction.html)：IMMEDIATE写事务与锁边界。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 41`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

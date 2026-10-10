@@ -9,60 +9,32 @@
 
 ## 学习目标
 
-- 能定义本课关键概念，并指出它负责的输入、输出与失败条件。
-- 能阅读演示函数，按顺序跟踪数据和状态变化。
-- 能独立完成新增需求，构造正常、边界和错误输入。
-- 能说清教学模拟尚未覆盖的生产能力。
+- 能追踪draft、waiting、done/rejected四种状态的允许转移。
+- 能说明无decision时为何保持waiting，以及拒绝如何成为终态。
+- 能把任务ID与审批摘要绑定，阻止批准恢复到另一个任务。
 
 ## 前置知识
 
-先理解阶段13—16的循环、状态、工具和审批概念，并复习阶段25任务检查点/恢复；本课将它们映射到图状态与中断。框架接入不是跳过底层概念的捷径。
-
-先复习阶段02的字典、列表与集合，以及阶段03的函数和模块。
-读取路径与异常请复习阶段04；测试入口请复习阶段06。
-不要求先购买服务或绑定供应商；未熟悉语法时可逐行运行并打印中间变量。
+真正先修是阶段13—16的循环、状态与审批，以及阶段25的恢复概念；若只预习可先看本地step函数，真实checkpointer留待集成验收。
 
 ## 概念
 
-### 1. 状态
+`step`先复制输入状态，再按stage做单步转换：draft进入waiting；waiting遇到None仍保持等待；收到布尔decision才转done或rejected；终态再次进入时不变。非布尔审批值抛ValueError。
 
-定义：节点间传递的业务数据。
+下面摘录或简化本课示例的关键步骤，需结合[完整源码](examples/demo.py)中的定义与上下文阅读；运行时使用下方演示命令。
 
-用途：解决本场景中状态的责任边界。
+```python
+if state["stage"] == "waiting":
+    if decision is None:
+        return next_state
+    if not isinstance(decision, bool):
+        raise ValueError("审批决定必须为布尔值")
+    next_state["stage"] = "done" if decision else "rejected"
+```
 
-具体例子：任务号与approved布尔值。
+先预测：`step(waiting_state, False)`得到什么？新的stage是rejected，approved=False；原状态仍是waiting。这里做浅复制，本例只改外层字段；若节点要改嵌套对象，必须重新设计状态所有权。
 
-检查问题：如果这个信息缺失，哪一步会失败或产生误导？
-
-### 2. 节点与边
-
-定义：节点计算状态变化，边选择下一步。
-
-用途：解决本场景中节点与边的责任边界。
-
-具体例子：draft后进入review。
-
-检查问题：如果这个信息缺失，哪一步会失败或产生误导？
-
-### 3. 检查点
-
-定义：按线程保存执行状态。
-
-用途：解决本场景中检查点的责任边界。
-
-具体例子：thread_id=case-1。
-
-检查问题：如果这个信息缺失，哪一步会失败或产生误导？
-
-### 4. 中断与恢复
-
-定义：暂停节点等待外部决定，再继续执行。
-
-用途：解决本场景中中断与恢复的责任边界。
-
-具体例子：拒绝时进入rejected而非执行付款。
-
-检查问题：如果这个信息缺失，哪一步会失败或产生误导？
+反例：恢复时只检查approved而不核对task和摘要，可能把T1批准用于T2。练习将审批绑定到同一task/digest，并拒绝过期或不匹配记录。真实LangGraph还需持久checkpointer和节点重跑幂等，单次调用这个纯函数不证明副作用只发生一次。
 
 ## 演示文件与执行命令
 
@@ -88,9 +60,7 @@ python -m unittest discover -s lessons/27-langgraph/tests -v
 
 ### 预期输出如何阅读
 
-演示会打印本课输入处理后的结果，字典里的字段与函数返回值一一对应。
-下面的执行流程说明每一行的来源；完整输出记录在本课verification.md中。
-对照时关注状态、证据与错误边界，不依赖哈希值或字典排版习惯。
+第一次step把输入draft复制并转成waiting；第二次给False后得到rejected和approved=False。打印的第一份waiting状态未被第二次调用改写，展示了单步状态转换与暂停点。
 
 ## 执行过程与状态变化
 
@@ -99,25 +69,7 @@ python -m unittest discover -s lessons/27-langgraph/tests -v
 3. 决定必须为bool，拒绝进入rejected。
 4. 默认纯函数与integrations真实状态图对照。
 
-入口 `main()` 准备固定业务数据，只运行有限步骤，然后正常退出。
-核心函数处理参数并返回数据，打印放在入口，便于测试不依赖终端文本。
-先判断非法输入，再读取或修改业务状态；这让失败路径不误写成成功。
-参考答案新增练习要求，不能把默认演示已通过当作你的练习已通过。
-
-## 逐行阅读与Python语法
-
-先找到 `def` 或 `class`，这是函数或类的定义，不会在定义时自动完成业务调用。
-函数括号内是参数，调用时实参传入这些名字；`return`结束当前函数并交还结果。
-`if` 根据条件选择分支，冒号后的缩进属于该分支；Python不使用Java花括号表示代码块。
-`for item in items` 逐个遍历对象；字典直接遍历得到键，`.items()`同时提供键和值。
-列表推导式 `[x for x in rows if condition]` 等价于新建列表、遍历、判断、append。
-集合 `set(...)` 自动去重；`&` 是集合交集，用来保留同时出现的元素。
-字典 `.get(key)` 在键不存在时返回None，直接 `[key]` 则可能抛KeyError。
-`raise` 抛出异常，调用者可以用 `try/except` 区分明确错误类型。
-`dict(row)` 只做浅复制，嵌套列表仍可能共享；本例字段简单，生产要明确所有权。
-`lambda` 是小的匿名函数，本课排序键只负责返回排序依据，不应夹带写入副作用。
-`if __name__ == "__main__"` 只在直接运行时执行入口，被测试导入时不打印演示。
-出现Path、hashlib、json或tempfile时，它们都是标准库；结合源码注释看具体调用目的。
+默认输出先显示由draft派生的waiting副本，再显示收到False后得到的rejected副本；输入字典没有被直接改写。
 
 ## 对照源码的逐行解释
 
@@ -135,12 +87,7 @@ python -m unittest discover -s lessons/27-langgraph/tests -v
 
 ## Java Web对照
 
-Python字典类似 `Map<String, Object>`，但动态键更容易遗漏字段，所以业务边界必须检查。
-Python集合类似 `HashSet`，列表类似 `ArrayList`；不能把集合顺序当稳定业务顺序。
-纯函数类似Service方法：接收明确输入，返回结果；控制器/入口负责展示。
-`ValueError`类似参数非法，`PermissionError`类似授权失败；两者不应统一当作可重试网络错误。
-Python没有编译器保证字典字段齐全；后续可用数据类或Schema校验，但类型标注本身不做运行时验证。
-Java中的事务、数据库和Spring Security不会因迁移到Python而自动存在，必须明确设计与验证。
+Java常用枚举与不可变状态对象限制转移；本课用字典演示状态更新，浅复制不会复制嵌套值，框架恢复还须绑定同一任务与审批摘要。
 
 ## 易错点与排错顺序
 
@@ -157,7 +104,7 @@ Java中的事务、数据库和Spring Security不会因迁移到Python而自动�
 
 打开 [练习要求](exercises/README.md)，在 [practice.py](exercises/practice.py) 实现。
 骨架有意留下待实现函数，示例和参考答案不能替代你自己的思考与测试。
-提交正常、边界、失败三类证据；每个输出要说明为什么符合业务约束。
+自动校验保存状态转换与绑定拒绝；真实checkpointer和节点副作用仍须独立集成验收。
 
 ## 能力验收
 
@@ -188,3 +135,8 @@ Java中的事务、数据库和Spring Security不会因迁移到Python而自动�
 ## 真实集成入口
 
 打开[集成说明](integrations/README.md)，按独立环境安装和验证；默认运行无需安装这些依赖。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 27`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

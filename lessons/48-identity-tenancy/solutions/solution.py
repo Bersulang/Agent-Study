@@ -26,3 +26,11 @@ api["write_ticket"]("session-a", "A", "T-001", "done", approval_a, tickets, audi
 assert tickets[("A", "T-001")] == "done" and tickets[("B", "T-001")] == "open"
 assert all("token" not in row and "content" not in row for row in audit)
 print("隔离缓存：", sorted(cache)); print("最后审计：", audit[-1])
+
+def solve(data):
+    """构造租户隔离缓存键并生成脱敏的最小审计信息。"""
+    tenant, user, key = data["tenant"], data["user"], data["key"]
+    writer = bool(data.get("writer", False))
+    approval = bool(data.get("approval", False))
+    audit = {"tenant": tenant, "user": user, "allowed": not writer or approval}
+    return {"cache_key": (tenant, user, key), "allowed": audit["allowed"], "audit": audit}

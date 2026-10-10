@@ -41,6 +41,11 @@
 
 具体例子：human返回permission=none，不自动赋予人工角色业务写权限。
 
+<details><summary>先预测：`route("查询工单", {"knowledge"}, model_choice="ticket")`返回什么？</summary>
+
+先按文本得到ticket候选；随后模型候选ticket属于已知角色，所以当前候选仍是ticket。但调用者的`allowed_roles`只有knowledge，最后权限过滤将角色改成human，返回`{"role": "human", "permission": "none"}`。如果跳过最后一步，模型就能替调用者扩大权限。
+</details>
+
 ## 演示与默认命令
 
 默认示例只用标准库、离线数据，无API Key；运行有限并退出。
@@ -103,7 +108,6 @@ def run_case(case):
 4. allowed_roles做最后一道权限过滤，判断与授权分离。
 5. run_case分别展示成功、歧义和候选越权。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -143,7 +147,7 @@ python lessons/30-routing-roles/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“职责边界”与“规则路由”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`denied`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -162,3 +166,8 @@ python lessons/30-routing-roles/exercises/practice.py
 
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [LangChain多Agent模式](https://docs.langchain.com/oss/python/langchain/multi-agent)：用来对比路由、主控及交接，本课未依赖框架。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 30`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

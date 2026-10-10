@@ -29,3 +29,15 @@ with TemporaryDirectory() as folder:
     assistant.approve("lab-a", "revise", revised["digest"], now=11)
     print("新增只读工具：", assistant.ticket_summary("lab-a", "revise"))
     print("跨租户工具查询：", assistant.ticket_summary("lab-b", "revise"))
+
+def solve(data):
+    """检查离线审批摘要和幂等恢复规则；不代表真实重启。"""
+    allowed = (data.get("approved") is True and data.get("action") == data.get("approved_action")
+               and data.get("now", 0) < data.get("expires_at", 0))
+    status = "unknown"
+    recovered = bool(data.get("restarted", False))
+    for row in data.get("operations", []):
+        if row["key"] == data.get("key"):
+            status = "completed" if row["digest"] == data.get("digest") else "conflict"
+            break
+    return {"allowed": allowed, "status": status, "recovered": recovered}

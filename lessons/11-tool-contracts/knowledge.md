@@ -2,61 +2,29 @@
 
 关联课程：[讲义](README.md)；例子：[可运行演示](examples/demo.py)。
 
-## 工具描述与粒度
+## 工具描述是权限吗？
 
-定义：工具是被程序显式暴露的有限能力；描述告诉模型何时调用，参数与结果告诉程序如何校验。
+不是。描述只帮助模型选择`ticket_lookup`；Python的`TOOLS`注册表决定哪些调用真的存在。模型请求未注册的`exec`时，`dispatch`返回unknown_tool，而不是执行它。生产系统还要从可信登录上下文读取调用者身份并检查对目标工单的权限，本课没有身份系统。
 
-使用：ticket_lookup只查询单个工单，比一个可执行任意SQL或命令的万能工具更可控。
+## Schema存在后还要本地校验吗？
 
-核查：在演示中找出对应位置，修改输入并预测结果。
+要。`TOOL_SPEC`只描述对象需要一个字符串id且拒绝额外字段；Python函数可能从测试、脚本或其他调用方直接被调用。演示还运行时检查dict类型、`set(arguments) == {"id"}`、非空字符串，随后才查数据。`{"id":"T1","admin":true}`必须因多余字段失败；Schema不拦截所有本地调用。
 
-边界：不要把本课的最小例子直接当生产实现。
+## 为什么用结果信封？
 
-## 参数Schema与业务校验
+成功信封有`ok=True`、`data`副本、`error=None`；失败信封有`ok=False`、`data=None`、稳定code和`retryable=False`。参数类型错误用invalid_arguments；合法但不存在的ID用not_found；工具名不在注册表用unknown_tool。类别分开后，上层能决定澄清、回退或终止，不必解析错误文案。
 
-定义：Schema约束输入形状；运行时校验是实际执行门禁，权限还需可信身份核查。
+## 为什么返回副本？
 
-使用：id必须非空字符串且没有额外字段；模型给出id并不证明有权读取它。
-
-核查：在演示中找出对应位置，修改输入并预测结果。
-
-边界：不要把本课的最小例子直接当生产实现。
-
-## 结果信封与错误契约
-
-定义：统一结果结构包含ok、data、error；错误有稳定code和retryable。
-
-使用：not_found不应重试，temporary_unavailable可在预算内重试。
-
-核查：在演示中找出对应位置，修改输入并预测结果。
-
-边界：不要把本课的最小例子直接当生产实现。
-
-## 注册表与分发
-
-定义：注册表把公开名字映射到已知函数，分发只访问白名单。
-
-使用：用TOOLS.get(name)，不使用eval、不按模型名称动态import。
-
-核查：在演示中找出对应位置，修改输入并预测结果。
-
-边界：不要把本课的最小例子直接当生产实现。
+`ticket_lookup`对命中的T1执行`.copy()`再放进data。若把共享的`TICKETS["T1"]`原字典交给调用者，调用者修改结果也会改写演示数据；副本避免这种意外共享。本例只复制一层，因为数据当前只有字符串字段。
 
 ## 执行与失败路径
 
-TOOL_SPEC只是声明，没有自动执行Python校验；真实供应商需转换成其工具格式。
-
-dispatch按已注册字符串名称查表，unknown_tool返回错误。
-
-ticket_lookup检查对象、精确字段集合、字符串与空白，再查询。
-
-未找到与无效参数分别使用not_found、invalid_arguments。
-
-成功信封里data为副本，error为None，调用者按ok分支处理。
+调用顺序是`dispatch -> TOOLS查表 -> ticket_lookup校验 -> TICKETS查找 -> 结果信封`。当name=exec时在查表处终止；当id=1时在参数校验处终止；当id=T9时才进入数据查询并返回not_found；id=T1则成功返回副本。
 
 ## Java迁移
 
-相当于Java REST DTO校验与Service方法白名单；描述类似OpenAPI但不是授权。Python函数可作为字典值直接传递，调用tool(arguments)不需要反射。
+Java DTO校验与路由白名单对应参数验证和TOOLS注册表。Python函数可直接作为字典值调用；两种语言都不能把模型提供的参数当成已经认证的用户身份。
 
 ## 工程应用
 
@@ -64,9 +32,7 @@ ticket_lookup检查对象、精确字段集合、字符串与空白，再查询�
 
 ## 复习与验证
 
-先解释概念，再完成[独立练习](exercises/README.md)。
-
-保留真实运行记录；参考答案能运行不代表你已掌握。
+练习见[独立练习](exercises/README.md)：为status检索增加明确参数域和不同错误码。先列出未知工具、未知status和成功列表各自预期信封，再实现；真实用户身份仍需下一层服务提供。
 
 [官方来源](https://json-schema.org/understanding-json-schema/reference/object)
 

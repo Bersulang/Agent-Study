@@ -25,3 +25,10 @@ except ValueError:
     print("启动拒绝非法端口")
 print("依赖失效：存活200，就绪503；实际写权限失败由回归测试覆盖")
 print("Docker重启与卷持久验证：见solutions/README.md，本次未运行Docker")
+
+def solve(data):
+    """检查启动目录与存活/就绪探针的离线规则。"""
+    if not data["data_dir_writable"]:
+        raise ValueError("数据目录不可写")
+    return {"liveness_status": 200,
+            "readiness_status": 200 if data["dependency_healthy"] else 503}

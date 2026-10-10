@@ -2,71 +2,37 @@
 
 关联课程：[讲义](README.md)；例子：[可运行演示](examples/demo.py)。
 
-## JSON Schema与运行时校验
+## 一块read结果等于一个事件吗？
 
-定义：Schema描述对象字段、类型与约束；结构化输出能力支持范围依供应商而变。
+不等于。网络块任意切分，可能只包含一段`data:`行，也可能把一个UTF-8字符拆开。增量decoder保留不完整字节，文本buffer保留未结束的行；只有SSE空行边界才提交事件。CRLF也要作为一个换行处理。
 
-使用：title必填非空，priority整数1—5，additionalProperties=false拒绝额外字段；仍需业务验证。
+## JSON解析应放在何时？
 
-核查：在演示中找出对应位置，修改输入并预测结果。
+不要对每个网络chunk直接`json.loads`，chunk不是JSON边界。先按SSE规则把一个事件的data行拼起来，再按应用协议处理内容。本课wire直接把JSON文本分在多个data事件中，`collect_draft`累计后再拼接；真实Chat流可能先要解析SSE中的JSON envelope，再取delta文本。
 
-边界：不要把本课的最小例子直接当生产实现。
+## [DONE]属于SSE规范吗？EOF会结束草稿吗？
 
-## 网络块与SSE事件
+`[DONE]`是本课演示的Chat风格应用完成标记，不是SSE规范字段。parser遇到空行才yield事件；传输EOF不会替缺少的事件空行或完成标记补数据。没有[DONE]时，`collect_draft`拒绝返回对象。
 
-定义：网络read返回字节块，边界任意；SSE按UTF-8文本行解析，用空行提交事件。
+## Schema通过就能写入系统吗？
 
-使用：一个事件可横跨多个字节块；中文可在多字节中间切开，必须增量解码。
-
-核查：在演示中找出对应位置，修改输入并预测结果。
-
-边界：不要把本课的最小例子直接当生产实现。
-
-## data行与完成标记
-
-定义：多个data行以换行连接；注释心跳不产生业务数据；EOF不自动提交未终止事件。
-
-使用：[DONE]是本课Chat风格应用标记，不是SSE规范通用字段，Responses事件另有结构。
-
-核查：在演示中找出对应位置，修改输入并预测结果。
-
-边界：不要把本课的最小例子直接当生产实现。
-
-## 取消与提交边界
-
-定义：取消使生成停止；只有完整完成并校验后才能发布草稿。
-
-使用：先展示临时文本，最终返回对象；取消或缺少完成标记丢弃未提交草稿。
-
-核查：在演示中找出对应位置，修改输入并预测结果。
-
-边界：不要把本课的最小例子直接当生产实现。
+不能。`validate_draft`只确认值是包含title和priority的精确dict，title非空且priority是1—5严格整数。草稿通过结构校验后也还不是已获权限的工单；提交需走服务端权限与审批。取消或断流时临时字符串不会变成正式业务状态。
 
 ## 执行与失败路径
 
-UTF-8增量解码器保留尚未完整的多字节字符；buffer保留跨块文本行。
-
-扫描CR与LF，CRLF视为一个换行；末尾CR等待后续块，注释行跳过。
-
-空行提交data列表；同一事件多行data用换行连接，不能逐read调用json.loads。
-
-collect_draft拼接不同delta事件，等[DONE]；取消会抛出专门异常。
-
-json.loads后validate_draft执行类型和字段校验；返回的只是草稿，写入另需审批。
+每3字节输入后，decoder先补齐字符、buffer再补齐行；空行将data行交给`collect_draft`。草稿片段暂存在局部parts，随后收到[DONE]才解析完整JSON。移除[DONE]会保持done=False并拒绝；取消检查为真会抛StreamCancelled。Schema通过返回的只是草稿对象，不会触发写入。
 
 ## Java迁移
 
-可类比Java InputStreamReader处理字节到字符，BufferedReader.readLine处理行；read(byte[])不能当消息边界。Python生成器以yield交付事件，消费者可以在完成后停止读取。
+Java `InputStreamReader`和`BufferedReader`也分别处理字节解码与行边界；读取块不是协议消息。Python生成器可以每个完整SSE事件yield一次，消费者再累计应用层需要的字段。
 
 ## 工程应用
 
-本课实现SSE数据字段与事件边界，未实现id重连、retry和命名事件分发；不是完整EventSource客户端。生产要处理连接超时、断连、流量上限与供应商事件JSON envelope。
+本课实现SSE数据字段与事件边界，未实现id重连、retry和命名事件分发；不是完整EventSource客户端。生产还需连接超时、断连、流量上限与供应商事件JSON envelope。
 
 ## 复习与验证
 
-先解释概念，再完成[独立练习](exercises/README.md)。
-
-保留真实运行记录；参考答案能运行不代表你已掌握。
+练习入口见[独立练习](exercises/README.md)：保留title/priority契约，新增可选description并限制累计字节数。先预测未完成流是否返回草稿，再实现超限与非法字段拒绝；不自动“修好”模型数据。
 
 [官方来源](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 

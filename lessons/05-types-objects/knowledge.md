@@ -2,71 +2,37 @@
 
 关联课程：[讲义](README.md)；例子：[综合演示](examples/demo.py)、[普通类与组合](examples/01_class_composition.py)、[类型标注与数据类](examples/02_types_dataclass.py)、[推导式与解包](examples/03_comprehension_unpacking.py)、[生成器](examples/04_generators.py)、[装饰器](examples/05_decorators.py)。
 
-## 类、实例与组合
+## 组合和继承有什么区别？
 
-定义：类描述对象结构；实例拥有具体字段；组合表示一个对象使用另一个对象服务。
+看[普通类示例](examples/01_class_composition.py)：Repository保存Ticket实例，并调用其字段，这叫“仓库有工单”；它不是工单的一种，所以无需继承。`__init__`在`Ticket("T-1", 4)`时给当前对象写入字段；查找成功返回对象，失败显式`return None`。在Java里这接近Repository持有POJO/实体集合。
 
-使用：Ticket代表一条工单；Repository保存Ticket，不必继承Ticket。
+## dataclass能替我验证类型吗？
 
-核查：在演示中找出对应位置，修改输入并预测结果。
+不能。`@dataclass`根据`ticket_id: str`和`priority: int`生成构造方法，但Python不会据此拒绝`Ticket(9, "high")`。`__post_init__`才是真正的校验位置：先`isinstance(ticket_id, str)`再`.strip()`；优先级检查`type(priority) is int`并要求1—5。因为`bool`是`int`子类，`isinstance(True, int)`为真，而严格type比较为假。Java有编译期类型检查，Python注解本身没有这个保证。
 
-边界：不要把本课的最小例子直接当生产实现。
+## 推导式、解包和生成器的结果何时出现？
 
-## 数据类与类型标注
+推导式对输入立即迭代并创建列表；示例从`[("T-1",5),("T-2",2),("T-3",4)]`得到`["T-1","T-3"]`。解包把第一个二元组的两项绑定给两个名称；三项对两个名称会失败。含`yield`的函数调用先返回生成器对象，迭代器请求下一项时才继续运行函数体，所以它能在数据量大时避免一次创建全部结果。它是一次性迭代器，耗尽后不会自动重置。
 
-定义：@dataclass生成初始化等常见方法；field: str说明预期类型，不自动验证。
+## 装饰器会不会改变函数结果？
 
-使用：__post_init__显式拒绝空id与越界priority；bool是int子类，严格整数可用type(value) is int。
-
-核查：在演示中找出对应位置，修改输入并预测结果。
-
-边界：不要把本课的最小例子直接当生产实现。
-
-## 推导式、解包与生成器
-
-定义：推导式构造容器；解包将多个值绑定变量；yield每次产生一个值并暂停。
-
-使用：[t.id for t in tickets]生成完整列表；生成器逐条处理，避免全量物化。
-
-核查：在演示中找出对应位置，修改输入并预测结果。
-
-边界：不要把本课的最小例子直接当生产实现。
-
-## 装饰器
-
-定义：装饰器接收函数并返回替代函数；@decorator等价于func=decorator(func)。
-
-使用：wraps保存原函数元信息；包装器用*args/**kwargs传递位置/关键字参数。
-
-核查：在演示中找出对应位置，修改输入并预测结果。
-
-边界：不要把本课的最小例子直接当生产实现。
+`@log_call`等价于`ticket_count = log_call(ticket_count)`。包装器先打印“调用 ticket_count”，再执行原函数并返回其结果2。`*args`和`**kwargs`在定义包装器时分别收集位置和关键字实参，调用原函数时再展开。漏掉`return function(...)`会让调用者只拿到`None`；`@wraps`保留原函数的名称等信息。Java注解通常是元数据，Python装饰器则实际替换名字绑定的函数对象。
 
 ## 执行与失败路径
 
-装饰器函数定义后，@dataclass处理Ticket，生成__init__等方法。
-
-Ticket("T1",5)先赋字段，再调用__post_init__，错误输入在对象边界拒绝。
-
-Repository复制外层列表，但内部Ticket对象仍共享，不能假设深复制。
-
-调用urgent先执行wrapper；返回生成器对象，尚未遍历函数体。
-
-列表推导式开始迭代生成器，yield产出T1；元组解包必须元素数匹配。
+综合演示先经`@dataclass`生成Ticket构造方法；实例构造随后跑`__post_init__`。Repository复制列表外壳，却保留内部对象引用。调用`urgent()`时包装器先输出调用提示；原函数由于含`yield`返回生成器，只有列表推导式开始取值时才筛选T1并跳过T2。最后二元组拆成ID与priority。分别改变外层列表和Ticket字段，可以区分浅拷贝与对象共享。
 
 ## Java迁移
 
-数据类接近Java DTO/record用途，但默认并非不可变；需要frozen=True才禁止通常的字段赋值。Pythonself显式出现在方法参数中，调用时自动传入。装饰器与Java注解不同：装饰器真实替换对象。
+Java record可以表达不可变数据，Python dataclass默认仍可变；`self`显式写在方法签名中，调用时由解释器传入。推导式类似Stream转换后立即收集，生成器更像惰性的一次性迭代器。装饰器与Java注解不等价：一个替换可调用对象，一个通常只是元数据。
 
 ## 工程应用
 
-SDK常见数据类、类型标注、迭代器与装饰器。读接口时区分“静态说明”和“运行时保证”；组合优先于为每个角色层层继承。
+SDK常见数据类、类型标注、迭代器与装饰器。阅读接口时区分“静态说明”和“运行时保证”；把仓库与工单组合在一起，比为每种仓库角色建立继承树容易替换和测试。
 
 ## 复习与验证
 
-先解释概念，再完成[独立练习](exercises/README.md)。
-
-保留真实运行记录；参考答案能运行不代表你已掌握。
+先预测：`Ticket("  ", 3)`与`Ticket("T-1", True)`分别在哪里拒绝？列表推导式遇到priority 2时会生成什么？再完成[独立练习](exercises/README.md)，把字典列表转换为经校验的Ticket实例并筛出高优先级。独立练习是你需要实现的契约；solutions仅供完成后对照。
 
 [官方来源](https://docs.python.org/zh-cn/3.12/library/dataclasses.html)
 

@@ -15,31 +15,29 @@
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：任务状态与产物的所有权
 
-### 1. Agent Card
+离线`TaskRegistry`只模拟服务端状态：submit建立submitted任务；finish只接受submitted，先切working再写artifact并完成；cancel把未完成任务置为canceled。终态不再产生产物。
 
-定义与用途：远程Agent发布的能力与传输元数据，不是授权凭据。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：集成服务声明ticket-status技能和JSON-RPC端点。
+```python
+if task["status"] != "submitted":
+    return
+task["status"] = "working"
+task["artifact"] = "T-7: open"
+task["status"] = "completed"
+```
 
-### 2. Task生命周期
+<details><summary>先预测：先cancel再finish，最终是否有artifact？</summary>
 
-定义与用途：任务有id、上下文和状态，状态不能任意倒退。
+没有；finish发现状态不是submitted便返回。completed任务取消会拒绝，不能删除既有产物。未知任务查询返回task_not_found。
 
-具体例子：submitted到completed，或submitted到canceled；终态不再执行。
+</details>
 
-### 3. 消息与产物
+A2A的Agent Card声明能力，不是调用授权；Task有生命周期，Artifact是正式输出。当前TaskRegistry不是A2A协议实现。真实集成须用官方SDK完成服务发现、任务事件和身份边界；缺少SDK/服务时离线练习可先完成，集成保持待验收。
 
-定义与用途：消息承载交互，Artifact是任务产生的正式输出。
-
-具体例子：SDK executor通过TaskUpdater添加T-7工单状态文本产物。
-
-### 4. 协议与认证
-
-定义与用途：A2A标准规定交互对象与方法，认证/授权仍由服务边界实现。
-
-具体例子：integrations使用官方a2a-sdk==0.3.26；默认TaskRegistry只是领域教具。
+Java可类比远程长任务API，但A2A标准化消息parts、task与artifact，字段序列化由SDK契约决定。取消确认也不保证已发生的远程副作用被回滚。
 
 ## 演示与默认命令
 
@@ -114,7 +112,6 @@ def run_case(case):
 4. get对未知id给结构化错误。
 5. 真实协议集成让SDK处理JSON-RPC封装与状态存储，不能把本地字典叫A2A实现。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -154,7 +151,7 @@ python lessons/37-a2a-remote/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“Agent Card”与“Task生命周期”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`unknown`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -179,3 +176,8 @@ python lessons/37-a2a-remote/exercises/practice.py
 - [LangChain多Agent模式](https://docs.langchain.com/oss/python/langchain/multi-agent)：用来对比路由、主控及交接，本课未依赖框架。
 - [A2A 0.3规范](https://a2a-protocol.org/v0.3.0/specification/)：固定协议版本。
 - [官方Python SDK](https://github.com/a2aproject/a2a-python)：真实协议实现。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 37`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

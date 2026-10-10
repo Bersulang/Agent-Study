@@ -16,31 +16,25 @@
 - 本课默认Python 3.12、Windows PowerShell，所有命令从项目根目录执行。
 - 演示执行成功与失败分支；运行通过只证明材料可执行，不代表学员已通过验收。
 
-## 关键概念
+## 关键概念：入口校验、任务状态与续读游标
 
-### 1. 请求校验
+离线`TaskService.create`先验证session和prompt，成功后才分配task id并创建running任务，初始事件只有progress。advance只处理running，追加text/final并终结；cancel先改状态并追加canceled，因此随后advance不会生成final。
 
-定义与用途：在入口验证类型、字段与范围，失败不创建任务。
+下面是机制相关的代码片段，需在原文件的函数或循环上下文中阅读，不是独立运行脚本。
 
-具体例子：空prompt返回422，领域层任务数不增加。
+```python
+if task["status"] == "running":
+    task["events"].extend(["text", "final"])
+    task["status"] = "completed"
+```
 
-### 2. 会话与任务
+<details><summary>先预测：空prompt创建任务后tasks有几条？</summary>
 
-定义与用途：会话组织多轮对话，任务表示一次有限执行，不应混用id。
+0，因为校验先于分配和写入。取消案例事件为progress、canceled。练习`after`表示最后已收到的序号，只返回更大的seq；session不匹配必须拒绝，不能当空事件列表。
 
-具体例子：create接收session_id并生成task-1。
+</details>
 
-### 3. 事件流
-
-定义与用途：progress描述进度、text描述增量内容、final表示正式完成。
-
-具体例子：StreamingResponse发送SSE，支持after序号续读。
-
-### 4. 取消
-
-定义与用途：把任务状态转为canceled，后续advance不得追加final。
-
-具体例子：cancel案例事件只有progress和canceled。
+示例是领域层字典，不是HTTP server。真实FastAPI路由、TestClient、SSE和取消/续读在integrations单独验收；离线机制由学员独立验收通过后，才能记机制通过。SSE的断线重连需有稳定序号，不能依赖连接内存游标。
 
 ## 演示与默认命令
 
@@ -115,7 +109,6 @@ def run_case(case):
 4. read返回events拷贝，调用者不能通过列表引用篡改事件。
 5. integrations app用路由装饰器注册接口，TestClient在进程内真实调用ASGI应用。
 
-逐行阅读时先找输入参数，再找校验条件、状态改变、失败返回，最后找资源清理；不要只从print输出反推过程。
 
 ### Python语法回顾
 
@@ -155,7 +148,7 @@ python lessons/39-fastapi-service/exercises/practice.py
 ## 能力验收
 
 1. 口头解释“请求校验”与“会话与任务”，用本课业务例子说明用途。
-2. 不阅读答案，完成练习的正常、边界和失败要求；保留实际运行命令与结果。
+2. 不阅读答案，完成练习的正常、边界和失败要求；统一校验会自动保存运行命令与结果，练习验收提问仍需独立解释。
 3. 手工预测`invalid`案例结果，指出哪些状态改变、哪些状态必须保持。
 4. 注释掉一个关键保护条件，解释哪个回归测试应失败；随后恢复代码。
 5. 对主项目提出一个新需求，给出输入/输出、权限、预算与失败恢复设计。
@@ -178,3 +171,8 @@ python lessons/39-fastapi-service/exercises/practice.py
 
 - [Python 3.12文档](https://docs.python.org/zh-cn/3.12/)：函数、集合、异常及标准库。
 - [FastAPI测试](https://fastapi.tiangolo.com/tutorial/testing/)及[流式响应](https://fastapi.tiangolo.com/advanced/custom-response/)：真实接口边界。
+
+
+## 自动练习校验
+
+从项目根目录运行`.\.venv\Scripts\python.exe tools/check_exercise.py 39`，校验结果与日志自动保存；课程能力和真实集成仍按本课原有标准验收。

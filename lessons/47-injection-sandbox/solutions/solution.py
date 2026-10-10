@@ -24,3 +24,18 @@ for url in ["http://docs.example.com/x", "https://user@docs.example.com/x", "htt
     assert not api["allowed_origin"](url)
 print("非法来源、用户名和端口：全部拒绝")
 # DNS解析、重定向和路径检查后被替换不是本函数能解决的问题，见solutions/README.md。
+
+def solve(data):
+    """只检查本地路径和URL结构；DNS与重定向要另做真实集成验证。"""
+    from pathlib import Path
+    from urllib.parse import urlparse
+    if data["kind"] == "file":
+        root = Path(data["workspace"]).resolve()
+        candidate = (root / data["path"]).resolve()
+        try: candidate.relative_to(root)
+        except ValueError: return {"allowed": False}
+        return {"allowed": candidate.suffix.lower() in {".md", ".txt"}}
+    if data["kind"] == "url":
+        parsed = urlparse(data["url"])
+        return {"allowed": parsed.scheme == "https" and not parsed.username and not parsed.password and parsed.port in {None, 443}}
+    return {"allowed": False}
